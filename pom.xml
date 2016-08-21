@@ -1,0 +1,110 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.dooioo.se.apidoclet</groupId>
+	<artifactId>apidoclet</artifactId>
+	<version>1.0.1</version>
+	<packaging>pom</packaging>
+	<properties>
+		<encoding>UTF-8</encoding>
+		<compile.version>1.8</compile.version>
+		<spring.version>4.1.2.RELEASE</spring.version>
+		<junit.version>4.12</junit.version>
+		<javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-framework-bom</artifactId>
+				<version>${spring.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<!--部署jar文件到仓库 -->
+	<distributionManagement>
+		<repository>
+			<id>nexus</id>
+			<name>Internal Releases</name>
+			<url>http://nexus.dooioo.org/nexus/content/repositories/releases/</url>
+			<uniqueVersion>false</uniqueVersion>
+		</repository>
+
+		<snapshotRepository>
+			<id>nexus</id>
+			<name>Internal Snapshots</name>
+			<url>http://nexus.dooioo.org/nexus/content/repositories/snapshots/</url>
+			<uniqueVersion>false</uniqueVersion>
+		</snapshotRepository>
+	</distributionManagement>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<source>${compile.version}</source>
+					<target>${compile.version}</target>
+					<showWarnings>false</showWarnings>
+					<compilerVersion>${compile.version}</compilerVersion>
+					<encoding>${encoding}</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.7</version>
+				<configuration>
+					<encoding>${encoding}</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<skipTests>true</skipTests>
+				</configuration>
+			</plugin>
+			<!-- jar插件 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<classesDirectory>target/classes/</classesDirectory>
+					<archive>
+						<addMavenDescriptor>false</addMavenDescriptor>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							<classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.1.2</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<modules>
+		<module>apidoclet-core</module>
+		<module>apidoclet-model</module>
+	</modules>
+</project>
