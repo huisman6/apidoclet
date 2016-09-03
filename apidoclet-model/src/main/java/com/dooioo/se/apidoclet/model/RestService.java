@@ -10,8 +10,8 @@ import java.util.List;
 import com.dooioo.se.apidoclet.model.config.ApiDocJson;
 
 /**
- * Rest微服务，对于Spring-Cloud-Netflix来说，注册在Eureka里的 VipAddress（虚拟主机）唯一标识一个服务，
- * 对于其他服务化架构来说，可以看做服务的注册名。
+ * Rest微服务，对于Spring-Cloud-Netflix来说，注册在Eureka里的 VipAddress（虚拟主机）唯一标识一个服务， 对于其他服务化架构来说，可以看做服务的注册名。
+ * 
  * @author huisman
  */
 public class RestService implements Serializable {
@@ -57,23 +57,23 @@ public class RestService implements Serializable {
   private String buildIpAddress;
 
   /**
-   * 微服务的所有SPI
+   * 微服务的所有SPI或者SpringMVC的Controller
    */
-  private List<RestClass> spiClasses = new ArrayList<>();
+  private List<RestClass> restClasses = new ArrayList<>();
 
   /**
    * 此微服务的SPI model
    */
-  private List<ModelInfo> spiModels;
+  private List<ModelInfo> modelInfos;
   /**
    * 此微服务的所有业务码
    */
-  private List<BizCode> spiBizCodes;
+  private List<BizCode> bizCodes;
 
   /**
    * 微服务的所有枚举值
    */
-  private List<EnumInfo> spiEnums;
+  private List<EnumInfo> enumInfos;
 
   /**
    * apidoc的一些配置，比如环境参数
@@ -119,37 +119,6 @@ public class RestService implements Serializable {
     super();
   }
 
-
-  public List<EnumInfo> getSpiEnums() {
-    return spiEnums;
-  }
-
-
-
-  public void setSpiEnums(List<EnumInfo> spiEnums) {
-    this.spiEnums = spiEnums;
-  }
-
-
-
-  public List<ModelInfo> getSpiModels() {
-    return spiModels;
-  }
-
-  public void setSpiModels(List<ModelInfo> spiModels) {
-    this.spiModels = spiModels;
-  }
-
-  public List<BizCode> getSpiBizCodes() {
-    return spiBizCodes;
-  }
-
-  public void setSpiBizCodes(List<BizCode> spiBizCodes) {
-    this.spiBizCodes = spiBizCodes;
-  }
-
-
-
   public RestService(String app, String appName) {
     super();
     this.appName = appName;
@@ -174,21 +143,45 @@ public class RestService implements Serializable {
     this.appName = appName;
   }
 
-  public List<RestClass> getSpiClasses() {
-    return this.spiClasses;
+  public List<RestClass> getRestClasses() {
+    return this.restClasses;
   }
 
 
   public void addSpiClass(RestClass spiClass) {
     if (spiClass != null) {
-      this.spiClasses.add(spiClass);
+      this.restClasses.add(spiClass);
     }
   }
 
   public void setSpiClasses(List<RestClass> spiClasses) {
     if (spiClasses != null) {
-      this.spiClasses.addAll(spiClasses);
+      this.restClasses.addAll(spiClasses);
     }
+  }
+
+  public List<ModelInfo> getModelInfos() {
+    return modelInfos;
+  }
+
+  public void setModelInfos(List<ModelInfo> modelInfos) {
+    this.modelInfos = modelInfos;
+  }
+
+  public List<BizCode> getBizCodes() {
+    return bizCodes;
+  }
+
+  public void setBizCodes(List<BizCode> bizCodes) {
+    this.bizCodes = bizCodes;
+  }
+
+  public List<EnumInfo> getEnumInfos() {
+    return enumInfos;
+  }
+
+  public void setEnumInfos(List<EnumInfo> enumInfos) {
+    this.enumInfos = enumInfos;
   }
 
   public Date getBuildAt() {
@@ -229,9 +222,9 @@ public class RestService implements Serializable {
     return "RestApp [app=" + app + ", appName=" + appName + ", buildAt=" + buildAt
         + ", lastBuildAt=" + lastBuildAt + ", buildBy=" + buildBy + ", buildIpAddress="
         + buildIpAddress + ", spiClasses="
-        + (spiClasses != null ? toString(spiClasses, maxLen) : null) + ", spiModels="
-        + (spiModels != null ? toString(spiModels, maxLen) : null) + ", spiBizCodes="
-        + (spiBizCodes != null ? toString(spiBizCodes, maxLen) : null) + "]";
+        + (restClasses != null ? toString(restClasses, maxLen) : null) + ", spiModels="
+        + (modelInfos != null ? toString(modelInfos, maxLen) : null) + ", spiBizCodes="
+        + (bizCodes != null ? toString(bizCodes, maxLen) : null) + "]";
   }
 
   private String toString(Collection<?> collection, int maxLen) {

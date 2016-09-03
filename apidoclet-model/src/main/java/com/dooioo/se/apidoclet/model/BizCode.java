@@ -21,6 +21,11 @@ public class BizCode implements Serializable {
    * BizCode注释
    */
   private String comment;
+  
+  /**
+   * 业务码可能归属的类名，可以为null
+   */
+  private String containingClass;
 
   /**
    * @param code
@@ -41,6 +46,16 @@ public class BizCode implements Serializable {
   
   public BizCode() {
     super();
+  }
+  
+  
+
+  public String getContainingClass() {
+    return containingClass;
+  }
+
+  public void setContainingClass(String containingClass) {
+    this.containingClass = containingClass;
   }
 
   public int getCode() {

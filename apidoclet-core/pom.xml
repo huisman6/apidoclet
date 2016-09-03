@@ -4,14 +4,13 @@
 	<parent>
 		<groupId>com.dooioo.se.apidoclet</groupId>
 		<artifactId>apidoclet</artifactId>
-		<version>1.0.1</version>
+		<version>1.0.0</version>
 	</parent>
 	<artifactId>apidoclet-core</artifactId>
-
+    <version>1.0.0-SNAPSHOT</version>
 	<properties>
 		<toolsjar>${java.home}/../lib/tools.jar</toolsjar>
 	</properties>
-	
 	<dependencies>
 		<dependency>
 			<groupId>jdk.tools</groupId>
@@ -21,11 +20,10 @@
 			<systemPath>${toolsjar}</systemPath>
 			<optional>true</optional>
 		</dependency>
-		
 		<dependency>
-			<groupId>com.dooioo.se.apidoclet</groupId>
+			<groupId>${project.parent.groupId}</groupId>
 			<artifactId>apidoclet-model</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>

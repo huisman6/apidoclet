@@ -18,18 +18,18 @@ public class RestServices implements Serializable {
   private List<RestService> apps = new ArrayList<RestService>();
 
   /**
-   * 当前项目的所有SPI model
+   * 当前项目的所有的model
    */
-  private List<ModelInfo> spiModels;
+  private List<ModelInfo> modelInfos;
   /**
    * 当前项目的所有业务码
    */
-  private List<BizCode> spiBizCodes;
+  private List<BizCode> bizCodes;
 
   /**
    * 当前项目的所有枚举
    */
-  private List<EnumInfo> spiEnums;
+  private List<EnumInfo> enumInfos;
 
   public List<RestService> getApps() {
     return apps;
@@ -46,29 +46,28 @@ public class RestServices implements Serializable {
       this.apps.add(app);
     }
   }
-
-  public List<EnumInfo> getSpiEnums() {
-    return spiEnums;
+  public List<ModelInfo> getModelInfos() {
+    return modelInfos;
   }
 
-  public void setSpiEnums(List<EnumInfo> spiEnums) {
-    this.spiEnums = spiEnums;
+  public void setModelInfos(List<ModelInfo> modelInfos) {
+    this.modelInfos = modelInfos;
   }
 
-  public List<ModelInfo> getSpiModels() {
-    return spiModels;
+  public List<BizCode> getBizCodes() {
+    return bizCodes;
   }
 
-  public void setSpiModels(List<ModelInfo> spiModels) {
-    this.spiModels = spiModels;
+  public void setBizCodes(List<BizCode> bizCodes) {
+    this.bizCodes = bizCodes;
   }
 
-  public List<BizCode> getSpiBizCodes() {
-    return spiBizCodes;
+  public List<EnumInfo> getEnumInfos() {
+    return enumInfos;
   }
 
-  public void setSpiBizCodes(List<BizCode> spiBizCodes) {
-    this.spiBizCodes = spiBizCodes;
+  public void setEnumInfos(List<EnumInfo> enumInfos) {
+    this.enumInfos = enumInfos;
   }
 
   @Override

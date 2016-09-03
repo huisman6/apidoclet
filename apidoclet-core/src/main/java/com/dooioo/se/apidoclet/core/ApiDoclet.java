@@ -1,240 +1,556 @@
 package com.dooioo.se.apidoclet.core;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.dooioo.se.lorik.apidoclet.contract.ContractConfigurer;
-import com.dooioo.se.lorik.apidoclet.contract.SpiBizCodes;
-import com.dooioo.se.lorik.apidoclet.contract.config.ApiDocJson;
-import com.dooioo.se.lorik.apidoclet.contract.config.EnvVariable;
-import com.dooioo.se.lorik.apidoclet.contract.model.FieldInfo;
-import com.dooioo.se.lorik.apidoclet.contract.model.RestApp;
-import com.dooioo.se.lorik.apidoclet.contract.model.RestApps;
-import com.dooioo.se.lorik.apidoclet.contract.model.SpiBizCode;
-import com.dooioo.se.lorik.apidoclet.contract.model.SpiClass;
-import com.dooioo.se.lorik.apidoclet.contract.model.SpiEnum;
-import com.dooioo.se.lorik.apidoclet.contract.model.SpiMethod;
-import com.dooioo.se.lorik.apidoclet.contract.model.SpiModel;
-import com.dooioo.se.lorik.apidoclet.util.ApiDocletClassLoader;
-import com.dooioo.se.lorik.apidoclet.util.StringUtils;
-import com.dooioo.se.lorik.spi.view.support.LorikRest.Feature;
+import com.dooioo.se.apidoclet.core.spi.BizCodeProvider;
+import com.dooioo.se.apidoclet.core.spi.EndpointMappingProvider;
+import com.dooioo.se.apidoclet.core.spi.ModelProvider;
+import com.dooioo.se.apidoclet.core.spi.RestClassMethodFilter;
+import com.dooioo.se.apidoclet.core.spi.RestClassMethodParameterResolver;
+import com.dooioo.se.apidoclet.core.spi.RestServiceFilter;
+import com.dooioo.se.apidoclet.core.spi.RestServicesExporter;
+import com.dooioo.se.apidoclet.core.spi.SkippedTypeFilter;
+import com.dooioo.se.apidoclet.core.spi.TypeInfoProvider;
+import com.dooioo.se.apidoclet.core.spi.postprocessor.ApiDocProcessContext;
+import com.dooioo.se.apidoclet.core.spi.postprocessor.RestClassMethodPostProcessor;
+import com.dooioo.se.apidoclet.core.spi.postprocessor.RestClassPostProcessor;
+import com.dooioo.se.apidoclet.core.spi.postprocessor.RestServicePostProcessor;
+import com.dooioo.se.apidoclet.core.util.ApiDocletClassLoader;
+import com.dooioo.se.apidoclet.core.util.ClassUtils;
+import com.dooioo.se.apidoclet.core.util.StringUtils;
+import com.dooioo.se.apidoclet.model.Artifact;
+import com.dooioo.se.apidoclet.model.BizCode;
+import com.dooioo.se.apidoclet.model.EndpointMapping;
+import com.dooioo.se.apidoclet.model.EnumInfo;
+import com.dooioo.se.apidoclet.model.ModelInfo;
+import com.dooioo.se.apidoclet.model.RestClass;
+import com.dooioo.se.apidoclet.model.RestService;
+import com.dooioo.se.apidoclet.model.RestServices;
+import com.dooioo.se.apidoclet.model.TypeInfo;
+import com.dooioo.se.apidoclet.model.config.ApiDocJson;
+import com.dooioo.se.apidoclet.model.config.EnvVariable;
+import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.ClassDoc;
-import com.sun.javadoc.DocErrorReporter;
-import com.sun.javadoc.LanguageVersion;
+import com.sun.javadoc.MethodDoc;
 import com.sun.javadoc.RootDoc;
+import com.sun.javadoc.SourcePosition;
+import com.sun.javadoc.Type;
 
 /**
- * This is an example of a starting class for a doclet, showing the entry-point methods. A starting
- * class must import com.sun.javadoc.* and implement the start(RootDoc) method, as described in the
- * package description. If the doclet takes command line options, it must also implement
- * optionLength and validOptions.
- * 
- * A doclet supporting the language features added since 1.1 (such as generics and annotations)
- * should indicate this by implementing languageVersion. In the absence of this the doclet should
- * not invoke any of the Doclet API methods added since 1.5, and the results of several other
- * methods are modified so as to conceal the new constructs (such as type parameters) from the
- * doclet.
- * 
- * To start the doclet, pass -doclet followed by the fully-qualified name of the starting class on
- * the javadoc tool command line.
- * 
- * 
- * @author huisman
- * @since 1.0.0
- * @see http://docs.oracle.com/javase/1.5.0/docs/guide/javadoc/doclet/spec/index.html
- * @see https://docs.oracle.com/javase/6/docs/technotes/guides/javadoc/doclet/overview.html
- * @Copyright (c) 2015, Lianjia Group All Rights Reserved.
+ * 文档解析
  */
-public class ApiDoclet {
+class ApiDoclet {
   // 默认classes加载器，如果我们需要加载类
-  public static ApiDocletClassLoader APIDOCLET_CLASSES_LOADER =
-      new ApiDocletClassLoader(ApiDoclet.class.getClassLoader());
+  public static ApiDocletClassLoader APIDOCLET_CLASSES_LOADER = new ApiDocletClassLoader(
+      ApiDoclet.class.getClassLoader());
 
   /**
-   * 支持的命令行参数为key,value两个长度的选项
+   * 命令行参数
    */
-  private static final Set<String> SUPPORT_OPTIONS_LEN2 =
-      new HashSet<>(Arrays.asList(ApiDocletOptions.CLASS_DIR, ApiDocletOptions.VERSION,
-          ApiDocletOptions.ARTIFACT_ID, ApiDocletOptions.ARTIFACT_VERSION,
-          ApiDocletOptions.ARTIFACT_GROUP_ID, ApiDocletOptions.APP_NAME, ApiDocletOptions.APP,
-          ApiDocletOptions.EXPORT_TO));
+  private ApiDocletOptions options;
+  /**
+   * 判定哪些类提供Rest服务
+   */
+  private List<RestServiceFilter> restServiceFilters;
 
   /**
-   * 仅支持key，长度为1的选项
+   * 判断并获取model的信息
    */
-  private static final Set<String> SUPPORT_OPTIONS_LEN1 =
-      new HashSet<>(Arrays.asList(ApiDocletOptions.PRINT, ApiDocletOptions.IGNORE_VIRTUAL_PATH));
+  private List<ModelProvider> modelProviders;
 
   /**
-   * lorik feature可能响应的业务码
+   * 哪些方法是rest接口
    */
-  private static final Map<String, SpiBizCode> lorikFeatureBizCodeMap = new HashMap<>();
+  private List<RestClassMethodFilter> restMethodFilters;
 
-  static {
-    lorikFeatureBizCodeMap.put(Feature.NullTo404.name(), SpiBizCodes.LORIK_REST_NULL_TO_404);
+  /**
+   * 解析业务码
+   */
+  private List<BizCodeProvider> bizCodeProviders;
+
+  /**
+   * classdoc的类型信息
+   */
+  private List<TypeInfoProvider> typeInfoProviders;
+
+  /**
+   * 忽略哪些类型
+   */
+  private List<SkippedTypeFilter> skippedTypeFilters;
+
+  /**
+   * 方法参数的解析
+   */
+  private List<RestClassMethodParameterResolver> methodParameterResolvers;
+
+  /**
+   * 解析路径的映射信息
+   */
+  private List<EndpointMappingProvider> endpointMappingProviders;
+
+  /**
+   * 获取枚举信息
+   */
+  private EnumProvider enumProvider = new EnumProvider();
+
+  /**
+   * 服务接口导出到展示的地方
+   */
+  private List<RestServicesExporter> restServicesExporters;
+
+  /**
+   * 类上的后续处理
+   */
+  private List<RestClassPostProcessor> restClassPostProcessors;
+  /**
+   * 接口方法的后续处理
+   */
+  private List<RestClassMethodPostProcessor> restClassMethodPostProcessors;
+
+  /**
+   * 服务的后续处理
+   */
+  private List<RestServicePostProcessor> restServicePostProcessors;
+
+  public ApiDoclet(ApiDocletOptions options, List<RestServiceFilter> restServiceFilters,
+      List<ModelProvider> modelProviders, List<RestClassMethodFilter> restMethodFilters,
+      List<BizCodeProvider> bizCodeProviders, List<TypeInfoProvider> typeInfoProviders,
+      List<SkippedTypeFilter> skippedTypeFilters,
+      List<RestClassMethodParameterResolver> methodParameterResolvers,
+      List<EndpointMappingProvider> endpointMappingProviders,
+      List<RestServicesExporter> restServicesExporters,
+      List<RestClassMethodPostProcessor> restClassMethodPostProcessors,
+      List<RestClassPostProcessor> restClassPostProcessors,
+      List<RestServicePostProcessor> restServicePostProcessors) {
+    super();
+    this.options = options;
+    this.restServiceFilters = restServiceFilters;
+    this.modelProviders = modelProviders;
+    this.restMethodFilters = restMethodFilters;
+    this.bizCodeProviders = bizCodeProviders;
+    this.typeInfoProviders = typeInfoProviders;
+    this.skippedTypeFilters = skippedTypeFilters;
+    this.methodParameterResolvers = methodParameterResolvers;
+    this.endpointMappingProviders = endpointMappingProviders;
+    this.restServicesExporters = restServicesExporters;
+    this.restClassMethodPostProcessors = restClassMethodPostProcessors;
+    this.restClassPostProcessors = restClassPostProcessors;
+    this.restServicePostProcessors = restServicePostProcessors;
   }
 
+
   /**
-   * command line option，必须有此方法。 我们支持：-classdir<br/>
-   * javadoc自动调用以决定命令行option加上option的参数值的总长度。<br/>
-   * (每个option可能有值，也可能无值，javadoc会把选项放在一个二维数组里，返回值可以用来设置第二维数组的长度）
+   * 通过方法或类上的注解，解析Rest接口的映射信息。
    * 
    * @author huisman
-   * @param option
-   * @since 2016年1月16日
    */
-  public static int optionLength(String option) {
-    if (SUPPORT_OPTIONS_LEN2.contains(option)) {
-      // 表示-classdir option只有一个值（-classdir 后紧跟的字符串)，总共2个元素
-      return 2;
-    } else if (SUPPORT_OPTIONS_LEN1.contains(option)) {
-      return 1;
+  private EndpointMapping resolveEndpointMapping(AnnotationDesc[] classOrMethodAnnotations,
+      SourcePosition position) {
+    if (this.endpointMappingProviders == null || this.endpointMappingProviders.isEmpty()) {
+      return null;
     }
-    // 0 不支持其他option,2默认都是key value
-    return 2;
+
+    for (EndpointMappingProvider provider : this.endpointMappingProviders) {
+      EndpointMapping mapping = provider.produce(classOrMethodAnnotations, this.options, position);
+      if (mapping == null) {
+        continue;
+      }
+      return mapping;
+    }
+    return null;
   }
 
   /**
-   * javadoc 自动调用以验证option是否符合需要。
+   * 判断qualifiedClassName是否属于当前服务
    * 
-   * @param options
-   * @param reporter
-   * @since 2016年1月16日
+   * @author huisman
    */
-  public static boolean validOptions(String options[][], DocErrorReporter reporter) {
+  private boolean belongToCurrentRestService(RestService restService, String qualifiedClassName) {
+    if (this.restServiceFilters != null && !this.restServiceFilters.isEmpty()) {
+      for (RestServiceFilter filter : this.restServiceFilters) {
+        if (filter.include(restService, qualifiedClassName, this.options)) {
+          return true;
+        }
+      }
+      return false;
+    }
     return true;
   }
 
   /**
-   * NOTE: Without this method present and returning LanguageVersion.JAVA_1_5, Javadoc will not
-   * process generics because it assumes LanguageVersion.JAVA_1_1
+   * 导出服务
    * 
-   * @return language version (hard coded to LanguageVersion.JAVA_1_5)
+   * @author huisman
    */
-  public static LanguageVersion languageVersion() {
-    return LanguageVersion.JAVA_1_5;
+  private void exportRestServices(RestServices restServices) {
+    if (this.restServicesExporters == null || this.restServicesExporters.isEmpty()) {
+      this.options.getDocReporter().printWarning("============>> 没有找到RestServicesExporter。");
+      return;
+    }
+    for (RestServicesExporter restServicesExporter : restServicesExporters) {
+      restServicesExporter.exportTo(restServices, options);
+    }
   }
 
-
   /**
-   * access point
+   * 判断当前classdoc是否提供Rest服务，如果提供Rest服务，则提供服务名，否则返回null或者空， 调用方可根据serviceName是否存在来决定是否跳过进一步解析。
    * 
-   * @since 1.0.0
-   * @param rootDoc rootDoc
-   * @return true
+   * @author huisman
    */
-  public static boolean start(RootDoc rootDoc) {
-    // 命令行选项
-    ApiDocletOptions options = ContractConfigurer.readCommandLineOptions(rootDoc);
-    // 配置类加载器的根目录
-    APIDOCLET_CLASSES_LOADER.setClassdir(options.getClassdir());
-
-    ClassDoc[] classDocs = rootDoc.classes();
-    // 所有解析出来的微服务
-    Map<String, RestApp> restAppMap = new HashMap<>();
-    // 所有静态、公开访问的业务码字段
-    List<SpiBizCode> bizCodes = new ArrayList<>();
-    // 所有枚举
-    List<SpiEnum> spiEnums = new ArrayList<>();
-    // 所有SPI model
-    Map<String, SpiModel> spiModelMap = new HashMap<>();
-    // spibizcode 和lorik code的映射
-    Map<Integer, SpiBizCode> spiBizCodeMap = new HashMap<>();
-
-    for (ClassDoc classDoc : classDocs) {
-      // 所有枚举
-      if (ContractConfigurer.getDefaultSpiEnumFilter().accept(classDoc, options)) {
-        SpiEnum senum = ContractConfigurer.getDefaultSpiEnumFilter().handle(classDoc, options);
-        if (senum != null) {
-          spiEnums.add(senum);
-        }
-      }
-      // 判断是否是FeignClient
-      if (ContractConfigurer.getDefaultRestAppFilter().accept(classDoc, options)) {
-        // 解析rest app -> FeiClient
-        ContractConfigurer.resolveRestApp(classDoc, options, restAppMap);
-      } else if (ContractConfigurer.getDefaultSpiModelFilter().accept(classDoc, options)) {
-        // 解析所有的SPImodel，最后遍历所有解析的rest app ,
-        // 如果rest app里的任Spi class的包前缀包含某个model的包前缀，则说明此model是此rest app的
-        SpiModel model = ContractConfigurer.getDefaultSpiModelFilter().handle(classDoc, options);
-        if (model != null) {
-          spiModelMap.put(model.getClassName(), model);
-        }
-      } else if (ContractConfigurer.getDefaultBizCodeFilter().accept(classDoc, options)) {
-        // 解析业务码 业务码必须为static /public 字段，最后遍历所有解析的rest app ,
-        // 如果rest app里的任Spi class的包前缀包含某个BizCode的包前缀，则说明此BizCode是此rest app的
-        List<SpiBizCode> handledCodes =
-            ContractConfigurer.getDefaultBizCodeFilter().handle(classDoc, options);
-        if (handledCodes != null && handledCodes.size() > 0) {
-          bizCodes.addAll(handledCodes);
-          for (SpiBizCode spiBizCode : handledCodes) {
-            spiBizCodeMap.put(spiBizCode.getCode(), spiBizCode);
+  private String filterRestClassAndGetServiceName(ClassDoc classDoc) {
+    String serviceName = null;
+    if (this.restServiceFilters == null || this.restServiceFilters.isEmpty()) {
+      serviceName = deduceApp(this.options);
+    } else {
+      for (RestServiceFilter filter : this.restServiceFilters) {
+        if (filter.accept(classDoc, this.options)) {
+          serviceName = filter.getServiceName(classDoc, this.options);
+          if (!StringUtils.isNullOrEmpty(serviceName)) {
+            break;
           }
         }
       }
     }
+    return serviceName;
+  }
+
+  /**
+   * 推断服务名称
+   */
+  private String deduceApp(ApiDocletOptions options) {
+    // 源文件路径
+    String source = options.optionValue(ApiDocletOptions.SOURCE_PATH);
+    if (StringUtils.isNullOrEmpty(source)) {
+      return null;
+    }
+    String baseSourceDir = "src";
+    int sourceIndex = source.indexOf(baseSourceDir);
+    if (sourceIndex < 1) {
+      // File.Separator
+      return null;
+    }
+    String homeDir = source.substring(0, sourceIndex - 1);
+    // 取运行目录的文件夹名
+    Path homeDirPath = Paths.get(Paths.get(homeDir).normalize().toUri());
+    if (homeDirPath.getNameCount() > 0) {
+      return homeDirPath.getName(homeDirPath.getNameCount() - 1).toString();
+    }
+    return null;
+  }
+
+
+
+  /**
+   * 解析model
+   * 
+   * @author huisman
+   */
+  private ModelInfo resolveModelInfo(ClassDoc classDoc) {
+    if (this.modelProviders == null || this.modelProviders.isEmpty()) {
+      return null;
+    }
+    for (ModelProvider provider : modelProviders) {
+      if (provider.accept(classDoc, this.options)) {
+        ModelInfo modelInfo = provider.produce(classDoc, this.options);
+        if (modelInfo != null) {
+          return modelInfo;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 判断是否是Rest Endpoint，即这个方法可以解析为RestClass.Method
+   * 
+   * @author huisman
+   */
+  private boolean acceptThisMethod(MethodDoc methodDoc) {
+    if (this.restMethodFilters == null || this.restMethodFilters.isEmpty()) {
+      return true;
+    }
+    for (RestClassMethodFilter filter : restMethodFilters) {
+      if (filter.accept(methodDoc, this.options)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 获取默认提供的业务码
+   * 
+   * @author huisman
+   */
+  private List<BizCode> resolveProvidedBizCodes() {
+    List<BizCode> bizCodes = new ArrayList<BizCode>();
+    if (this.bizCodeProviders != null && !this.bizCodeProviders.isEmpty()) {
+      for (BizCodeProvider provider : bizCodeProviders) {
+        List<BizCode> providedBizCodes = provider.provided(this.options);
+        if (providedBizCodes != null && !providedBizCodes.isEmpty()) {
+          bizCodes.addAll(providedBizCodes);
+        }
+      }
+    }
+    return bizCodes;
+  }
+
+  /**
+   * 获取类上可能提供的业务码信息
+   * 
+   * @author huisman
+   */
+  private List<BizCode> resolveClassBizCodes(ClassDoc classDoc) {
+    List<BizCode> bizCodes = new ArrayList<BizCode>();
+    if (this.bizCodeProviders != null && !this.bizCodeProviders.isEmpty()) {
+      for (BizCodeProvider provider : bizCodeProviders) {
+        List<BizCode> providedBizCodes = provider.produce(classDoc, this.options);
+        if (providedBizCodes != null && !providedBizCodes.isEmpty()) {
+          bizCodes.addAll(providedBizCodes);
+        }
+      }
+    }
+    return bizCodes;
+  }
+
+  /**
+   * 获取方法上可能提供的业务码信息
+   * 
+   * @author huisman
+   */
+  private List<BizCode> resolveMethodBizCodes(MethodDoc methodDoc) {
+    List<BizCode> bizCodes = new ArrayList<BizCode>();
+    if (this.bizCodeProviders != null && !this.bizCodeProviders.isEmpty()) {
+      for (BizCodeProvider provider : bizCodeProviders) {
+        List<BizCode> providedBizCodes = provider.produce(methodDoc, this.options);
+        if (providedBizCodes != null && !providedBizCodes.isEmpty()) {
+          bizCodes.addAll(providedBizCodes);
+        }
+      }
+    }
+    return bizCodes;
+  }
+
+  /**
+   * 将JavaDoc的Type转换为TypeInfo
+   * 
+   * @author huisman
+   * @param type javadoc中的类型
+   */
+  private TypeInfo resolveTypeInfo(Type type) {
+    if (this.typeInfoProviders != null && !this.typeInfoProviders.isEmpty()) {
+      for (TypeInfoProvider provider : typeInfoProviders) {
+        if (shouldSkipType(type)) {
+          continue;
+        }
+        TypeInfo info = provider.produce(type, this.options);
+        if (info != null) {
+          return info;
+        }
+      }
+    }
+    return null;
+  }
+
+
+  /**
+   * 是否可以跳过此类型
+   * 
+   * @author huisman
+   */
+  private boolean shouldSkipType(Type type) {
+    if (this.skippedTypeFilters == null || this.skippedTypeFilters.isEmpty()) {
+      return false;
+    }
+    for (SkippedTypeFilter filter : skippedTypeFilters) {
+      if (filter.ignored(type, this.options)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 处理方法的参数
+   * 
+   * @author huisman
+   * @param methodDoc
+   * @param restClass
+   * @param method
+   */
+  private void processRestClassMethodParameters(MethodDoc methodDoc, RestClass restClass,
+      RestClass.Method method) {
+    if (this.methodParameterResolvers != null && !this.methodParameterResolvers.isEmpty()) {
+      for (RestClassMethodParameterResolver resolver : methodParameterResolvers) {
+        resolver.process(methodDoc, options, method, restClass);
+      }
+    }
+  }
+
+
+  /**
+   * 开始解析所有源代码，如果解析失败，则返回false
+   * 
+   * @author huisman
+   */
+  public boolean startParseSourceCodes(RootDoc rootDoc) {
+    ClassDoc[] classDocs = rootDoc.classes();
+    // 所有解析出来的微服务
+    Map<String, RestService> restAppMap = new HashMap<>();
+    // 所有静态、公开访问的业务码字段
+    List<BizCode> bizCodes = new ArrayList<>();
+    // 所有枚举
+    List<EnumInfo> spiEnums = new ArrayList<>();
+    // 所有model(pojo)
+    Map<String, ModelInfo> spiModelMap = new HashMap<>();
+    // 业务码值和BizCode的映射
+    Map<Integer, BizCode> spiBizCodeMap = new HashMap<>();
+
+    for (ClassDoc classDoc : classDocs) {
+      if (shouldSkipType(classDoc.getElementType())) {
+        continue;
+      }
+      // 所有枚举
+      if (this.enumProvider.accept(classDoc, this.options)) {
+        EnumInfo senum = this.enumProvider.handle(classDoc, this.options);
+        if (senum != null) {
+          spiEnums.add(senum);
+        }
+      }
+      // 解析model
+      ModelInfo modelInfo = this.resolveModelInfo(classDoc);
+      // 解析所有的SPImodel，最后遍历所有解析的rest app ,
+      if (modelInfo != null) {
+        spiModelMap.put(modelInfo.getClassName(), modelInfo);
+      }
+      // 业务码信息
+      List<BizCode> providedBizCodes = this.resolveClassBizCodes(classDoc);
+      if (providedBizCodes != null) {
+        bizCodes.addAll(providedBizCodes);
+      }
+      // 解析RestService
+
+    }
+    // 默认提供的业务码
+    List<BizCode> providedBizCodes = this.resolveProvidedBizCodes();
+    if (providedBizCodes != null) {
+      bizCodes.addAll(providedBizCodes);
+    }
+    for (BizCode bizCode : providedBizCodes) {
+      spiBizCodeMap.put(bizCode.getCode(), bizCode);
+    }
     // 最后，解析返回值，根据包名合并model/bizcode到每个rest app里
-    RestApps restApps = new RestApps();
-    restApps.setSpiBizCodes(bizCodes);
-    restApps.setSpiEnums(spiEnums);
-    restApps.setSpiModels(new ArrayList<>(spiModelMap.values()));
+    RestServices restApps = new RestServices();
+    restApps.setBizCodes(bizCodes);
+    restApps.setEnumInfos(spiEnums);
+    restApps.setModelInfos(new ArrayList<>(spiModelMap.values()));
 
     // 只有一个
     boolean emptyOrOnlyOne = (restAppMap.isEmpty() || restAppMap.size() == 1);
     // 解析apidoclet json
     ApiDocJson apiDocJson = parseApiDocletJson(options);
     for (String appName : restAppMap.keySet()) {
-      RestApp restApp = restAppMap.get(appName);
+      RestService restApp = restAppMap.get(appName);
       restApp.setApiDocJson(apiDocJson);
       // 后续处理
+      ApiDocProcessContext context =
+          new ApiDocProcessContext.Default(spiModelMap, spiBizCodeMap, this.options);
       // 等所有model解析了之后，最后解析一次返回值的字段是泛型model的、业务码
-      postProcessSpiClass(restApp, spiModelMap, spiBizCodeMap);
+      postProcessSpiClass(restApp, context);
       // 处理附加信息，比如构建时间，构件信息
-      postProcessApp(restApp, options);
+      postProcessApp(restApp, context);
 
       restApps.addApp(restApp);
 
       if (emptyOrOnlyOne) {
         // 如果只有一个rest app，model/bizcode全给它
-        restApp.setSpiModels(restApps.getSpiModels());
-        restApp.setSpiBizCodes(restApps.getSpiBizCodes());
-        restApp.setSpiEnums(restApps.getSpiEnums());
+        restApp.setModelInfos(restApps.getModelInfos());
+        restApp.setBizCodes(restApps.getBizCodes());
+        restApp.setEnumInfos(restApps.getEnumInfos());
       } else {
         // 划分业务码以及model stat
-        ContractConfigurer.partitionBizCodes(bizCodes, restApp);
-        ContractConfigurer.partitionSpiEnums(spiEnums, restApp);
-        ContractConfigurer.partitionSpiModels(restApps.getSpiModels(), restApp);
-
+        partitionBizCodes(bizCodes, restApp);
+        partitionEnums(spiEnums, restApp);
+        partitionModels(restApps.getModelInfos(), restApp);
       }
     }
 
     if (options.isPrint()) {
       options.getDocReporter().printNotice("\n");
-      options.getDocReporter()
-          .printNotice("finally resolved =========================================== as follow ");
+      options.getDocReporter().printNotice(
+          "finally resolved =========================================== as follow ");
       options.getDocReporter().printNotice("\n");
       options.getDocReporter().printNotice(restApps.toString());
       options.getDocReporter().printNotice("\n");
     }
 
-    // 分发数据
-    ContractConfigurer.exportRestApps(restApps, options);
-
+    // 分发解析后的数据
+    exportRestServices(restApps);
     return true;
   }
 
+  /**
+   * 将枚举划分到不同的微服务里
+   */
+  public void partitionEnums(List<EnumInfo> spiEnums, RestService restApp) {
+    if (spiEnums == null || spiEnums.isEmpty()) {
+      return;
+    }
+    List<EnumInfo> currentAppEnums = new ArrayList<>();
+    for (EnumInfo spiEnum : spiEnums) {
+      if (this.belongToCurrentRestService(restApp, spiEnum.getClassName())) {
+        currentAppEnums.add(spiEnum);
+      }
+    }
+    restApp.setEnumInfos(currentAppEnums);
+  }
+
+  /**
+   * 将model划分到不同的微服务里
+   */
+  public void partitionModels(List<ModelInfo> models, RestService restApp) {
+    if (models == null || models.isEmpty()) {
+      return;
+    }
+
+    List<ModelInfo> currentAppModels = new ArrayList<>();
+    for (ModelInfo spiModel : models) {
+      if (this.belongToCurrentRestService(restApp, spiModel.getClassName())) {
+        currentAppModels.add(spiModel);
+      }
+    }
+    restApp.setModelInfos(currentAppModels);
+  }
+
+  /**
+   * 将业务码划分到不同的微服务里
+   */
+  public void partitionBizCodes(List<BizCode> spiBizCodes, RestService restApp) {
+    if (spiBizCodes == null || spiBizCodes.isEmpty()) {
+      return;
+    }
+    List<BizCode> currentAppBizCodes = new ArrayList<>();
+    for (BizCode bizCode : spiBizCodes) {
+      if (this.belongToCurrentRestService(restApp, bizCode.getContainingClass())) {
+        currentAppBizCodes.add(bizCode);
+      }
+    }
+    restApp.setBizCodes(currentAppBizCodes);
+  }
 
   /**
    * 解析apidoclet json
@@ -246,13 +562,14 @@ public class ApiDoclet {
       Path path = Paths.get(projectRootDir, "apidoclet.json");
 
       if (!path.toFile().exists()) {
-        options.getDocReporter()
-            .printNotice("apidoclet.json not found ,ignored,file path: " + path.toAbsolutePath());
+        options.getDocReporter().printNotice(
+            "apidoclet.json not found ,ignored,file path: " + path.toAbsolutePath());
         return apiDocJson;
       }
 
-      Object jsonObject = JSONObject.parse(Files.readAllBytes(path),
-          com.alibaba.fastjson.parser.Feature.AllowComment);
+      Object jsonObject =
+          JSONObject.parse(Files.readAllBytes(path),
+              com.alibaba.fastjson.parser.Feature.AllowComment);
 
       // null or not
       if (!(jsonObject instanceof JSONObject)) {
@@ -296,7 +613,7 @@ public class ApiDoclet {
             }
             ev.setRows(allRows);
           }
-          //有headers 才设置env
+          // 有headers 才设置env
           apiDocJson.setEnv(ev);
         }
       }
@@ -319,17 +636,21 @@ public class ApiDoclet {
   }
 
   /**
-   * 设置rest app附加属性
+   * 设置rest app构建信息
    */
-  private static void postProcessApp(RestApp restApp, ApiDocletOptions options) {
+  private void postProcessApp(RestService restApp, ApiDocProcessContext context) {
+    // 客户端实现
+    if (this.restServicePostProcessors != null && !this.restServicePostProcessors.isEmpty()) {
+      for (RestServicePostProcessor processor : restServicePostProcessors) {
+        processor.postProcess(restApp, context);
+      }
+    }
     restApp.setBuildAt(new Date());
-    restApp.setBuildBy(options.getBuildBy());
-    restApp.setBuildIpAddress(options.getBuildIpAddress());
-
+    restApp.setBuildBy(context.getOpitons().getBuildBy());
+    restApp.setBuildIpAddress(context.getOpitons().getBuildIpAddress());
     // 构件信息
-    restApp.setArtifact(ContractConfigurer.resolveArtifactIfAny(options));
+    restApp.setArtifact(this.resolveArtifactIfAny(context.getOpitons()));
   }
-
 
   /**
    * 最后再解析下返回值、业务码，如果字段是model的话，比如是Pagination<br>
@@ -337,107 +658,53 @@ public class ApiDoclet {
    * 
    * @author huisman
    */
-  private static void postProcessSpiClass(RestApp app, Map<String, SpiModel> modelMap,
-      Map<Integer, SpiBizCode> spiBizCodeMap) {
-    List<SpiClass> spiClasses = app.getSpiClasses();
+  private void postProcessSpiClass(RestService app, ApiDocProcessContext context) {
+    List<RestClass> spiClasses = app.getRestClasses();
     if (spiClasses != null && !spiClasses.isEmpty()) {
-      for (SpiClass spiClass : spiClasses) {
-        postProcessSpiMethod(spiClass, modelMap, spiBizCodeMap);
+      for (RestClass spiClass : spiClasses) {
+        // class最后做一些处理
+        postProccessRestClass(spiClass, context);
+        // 方法做最后的处理
+        postProcessSpiMethod(spiClass, context);
+      }
+    }
+  }
+
+  private void postProccessRestClass(RestClass restClass, ApiDocProcessContext context) {
+    if (this.restClassPostProcessors != null && !this.restClassPostProcessors.isEmpty()) {
+      for (RestClassPostProcessor processor : restClassPostProcessors) {
+        processor.postProcess(restClass, context);
       }
     }
   }
 
 
   /**
-   * 解析字段中可能类型为model的，仅支持三层嵌套
+   * 对SpiMethod做后续处理
    */
-  private static void postProcessSpiMethod(SpiClass spiClass, Map<String, SpiModel> modelMap,
-      Map<Integer, SpiBizCode> spiBizCodeMap) {
-    List<SpiMethod> methods = spiClass.getMethods();
+  private void postProcessSpiMethod(RestClass spiClass, ApiDocProcessContext context) {
+    List<RestClass.Method> methods = spiClass.getMethods();
     if (methods != null && !methods.isEmpty()) {
-      for (SpiMethod method : methods) {
+      for (RestClass.Method method : methods) {
+        // 先调用客户端实现的postProcessRestMethod
+        if (this.restClassMethodPostProcessors != null
+            && !this.restClassMethodPostProcessors.isEmpty()) {
+          for (RestClassMethodPostProcessor processor : restClassMethodPostProcessors) {
+            processor.postProcess(method, spiClass, context);
+          }
+        }
         // 如果没有版本号，则尝试解析版本号
         setAnyVersion(method);
-        // 解析业务码
-        transformSpiBizCode(method, spiBizCodeMap);
-        // 尝试解析字段里的model。。的字段
-        List<FieldInfo> fieldInfos = method.getReturnType().getFields();
-        if (fieldInfos == null || fieldInfos.isEmpty()) {
-          continue;
-        }
-        for (FieldInfo fieldInfo : fieldInfos) {
-          if (!modelMap.containsKey(fieldInfo.getType().getActualType())) {
-            continue;
-          }
-
-          List<FieldInfo> modelFields =
-              modelMap.get(fieldInfo.getType().getActualType()).getFields();
-          // 仅支持三层嵌套
-          if (modelFields != null && modelFields.size() > 0) {
-            for (FieldInfo innerField : modelFields) {
-              if (!modelMap.containsKey(innerField.getType().getActualType())) {
-                continue;
-              }
-              innerField
-                  .setModelFields(modelMap.get(innerField.getType().getActualType()).getFields());
-            }
-          }
-          // 从model里获取字段
-          fieldInfo.setModelFields(modelFields);
-        }
-
       }
     }
   }
 
 
-  /**
-   * 转换业务码
-   */
-  private static void transformSpiBizCode(SpiMethod spiMethod,
-      Map<Integer, SpiBizCode> spiBizCodeMap) {
-    // 方法的业务码
-    Set<SpiBizCode> methodBizCodes = new HashSet<>();
-    // 如果需要登录
-    if (!spiMethod.isLoginNeedless()) {
-      methodBizCodes.addAll(
-          Arrays.asList(SpiBizCodes.API_GATEWAY_UNLOGIN, SpiBizCodes.API_GATEWAY_XTOKEN_EXPIRED,
-              SpiBizCodes.API_GATEWAY_XTOKEN_NETWORK_CAUSE_FAILED, SpiBizCodes.INVALID_REQUEST));
-    }
-
-    // 业务特性
-    String[] features = spiMethod.getLorikFeatures();
-    if (features != null && features.length > 0) {
-      for (String feature : features) {
-        SpiBizCode sbc = lorikFeatureBizCodeMap.get(feature);
-        if (sbc == null) {
-          continue;
-        }
-        methodBizCodes.add(sbc);
-      }
-    }
-
-    // 方法自己配置的
-    int[] codes = spiMethod.getLorikCodes();
-    if (codes != null && codes.length > 0) {
-      for (int code : codes) {
-        SpiBizCode sbc = spiBizCodeMap.get(code);
-        if (sbc == null) {
-          continue;
-        }
-        methodBizCodes.add(sbc);
-      }
-    }
-
-    // 设置业务码
-    spiMethod.setBizCodes(new ArrayList<>(methodBizCodes));
-
-  }
 
   /**
    * 查找任何版本号，如果没有提供，先从request path中提取，最后返回默认值
    */
-  private static void setAnyVersion(SpiMethod restAccessPoint) {
+  private static void setAnyVersion(RestClass.Method restAccessPoint) {
     String version = restAccessPoint.getVersion();
     // 如果没指定版本号
     if (StringUtils.isNullOrEmpty(version)) {
@@ -446,7 +713,7 @@ public class ApiDoclet {
       // 指定了request path
       if (!StringUtils.isNullOrEmpty(path)) {
         // 以版本号前缀开始，则截取版本号
-        if (path.startsWith(RestApp.VERSION_PREFIX_IN_PATH)) {
+        if (path.startsWith(RestService.VERSION_PREFIX_IN_PATH)) {
           int firstSlashIndex = path.indexOf("/");
           int secondSlashIndex = path.indexOf("/", firstSlashIndex + 1);
           if (firstSlashIndex >= 0 && secondSlashIndex > 0) {
@@ -454,13 +721,69 @@ public class ApiDoclet {
           }
         }
       }
-
       // 最终，还是没有解析出来实际版本，设置默认值
       if (StringUtils.isNullOrEmpty(version)) {
-        version = RestApp.DEFAULT_VERSION;
+        version = RestService.DEFAULT_VERSION;
       }
       restAccessPoint.setVersion(version);
     }
   }
 
+  /**
+   * 解析当前构件信息
+   */
+  private Artifact resolveArtifactIfAny(ApiDocletOptions options) {
+    com.dooioo.se.apidoclet.model.Artifact artifact = new Artifact();
+    artifact.setGroupId(options.optionValue(ApiDocletOptions.ARTIFACT_GROUP_ID));
+    artifact.setArtifactId(options.optionValue(ApiDocletOptions.ARTIFACT_ID));
+    artifact.setVersion(options.optionValue(ApiDocletOptions.ARTIFACT_VERSION));
+
+    // 读取readme
+    String projectRootDir = options.optionValue(ApiDocletOptions.PROJECT_ROOT_DIR);
+    if (!StringUtils.isNullOrEmpty(projectRootDir)) {
+      File rootDir = new File(projectRootDir);
+      if (!rootDir.isDirectory()) {
+        return artifact;
+      }
+      File[] candicateFiles = rootDir.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.toLowerCase().startsWith("readme");
+        }
+      });
+      if (candicateFiles != null && candicateFiles.length > 0) {
+        // 只取第一个
+        File readme = candicateFiles[0];
+        artifact.setReadmeFileName(readme.getName());
+
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get(readme.getAbsolutePath()))) {
+          StringBuilder cotentSb = new StringBuilder(500);
+          char[] buffer = new char[256];
+          int count = -1;
+          while ((count = reader.read(buffer)) > 0) {
+            cotentSb.append(buffer, 0, count);
+          }
+          artifact.setReadmeFileContent(cotentSb.toString());
+        } catch (IOException e) {
+          options.getDocReporter().printError(e.getMessage());
+        }
+      }
+    }
+    return artifact;
+  }
+
+
+  static class EnumProvider {
+    public boolean accept(ClassDoc classDoc, ApiDocletOptions options) {
+      return classDoc.isEnum();
+    }
+
+    public EnumInfo handle(ClassDoc classDoc, ApiDocletOptions options) {
+      // 解析SPI 枚举
+      EnumInfo spiEnum = new EnumInfo();
+      spiEnum.setClassName(classDoc.qualifiedTypeName());
+      spiEnum.setFields(ClassUtils.getFieldInfos(classDoc, null));
+      return spiEnum;
+    }
+  }
 }
