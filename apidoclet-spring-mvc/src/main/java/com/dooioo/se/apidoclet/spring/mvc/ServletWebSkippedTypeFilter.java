@@ -6,7 +6,6 @@ import java.util.Set;
 
 import com.dooioo.se.apidoclet.core.ApiDocletOptions;
 import com.dooioo.se.apidoclet.core.spi.filter.SkippedTypeFilter;
-import com.sun.javadoc.Type;
 
 /**
  * 忽略Rest接口中的一些参数,比如 HttpServletRequest
@@ -17,8 +16,8 @@ public class ServletWebSkippedTypeFilter implements SkippedTypeFilter {
       "javax.servlet.http.HttpServletResponse", "org.springframework.ui.Model"));
 
   @Override
-  public boolean ignored(Type type, ApiDocletOptions options) {
-    return ignoredTypes.contains(type.qualifiedTypeName());
+  public boolean ignored(String qualifiedTypeName, ApiDocletOptions options) {
+    return ignoredTypes.contains(qualifiedTypeName);
   }
 
 }

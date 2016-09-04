@@ -30,11 +30,11 @@
 		<plugins>
 			<plugin>
 				<groupId>com.dooioo.se.apidoclet</groupId>
-				<artifactId>apidoc-maven-plugin</artifactId>
+				<artifactId>apidoclet-maven-plugin</artifactId>
 				<version>1.0.0-SNAPSHOT</version>
 				<extensions>true</extensions>
 				<configuration>
-					<options>-appName "${project.name}"</options>
+					<options>-print -app spring-mvc-test -appName "${project.name}"</options>
 				</configuration>
 			</plugin>
 		</plugins>

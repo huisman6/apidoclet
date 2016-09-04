@@ -22,18 +22,15 @@ public class ResponseBodyRestClassMethodFilter implements RestClassMethodFilter 
     // 如果是Controller，则检查方法上是否有ResponseBody
     boolean hasRequestMappingOnMethod =
         AnnotationUtils.isPresent(methodDoc.annotations(), RequestMapping.class.getName());;
-    if (!hasRequestMappingOnMethod) {
+   if (!hasRequestMappingOnMethod) {
       return false;
     }
     if (AnnotationUtils.isPresent(spiClass.annotations(), Controller.class.getName())) {
-      if (!AnnotationUtils.isPresent(methodDoc.annotations(), ResponseBody.class.getName())) {
-        return false;
-      }
+      return AnnotationUtils.isPresent(methodDoc.annotations(), ResponseBody.class.getName());
     } else if (AnnotationUtils.isPresent(spiClass.annotations(), RestController.class.getName())) {
       return true;
     }
     return false;
-
   }
 
 }

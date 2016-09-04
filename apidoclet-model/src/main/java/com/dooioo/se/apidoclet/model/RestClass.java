@@ -449,16 +449,20 @@ public class RestClass implements Serializable {
       this.author = author;
     }
 
-
     @Override
     public String toString() {
-      return "SpiMethod [identity=" + identity + ", declaringClass=" + declaringClass
-          + ", methodName=" + methodName + ", mapping=" + this.mapping + ", description="
-          + description + ", version=" + version + ", since=" + since + ", author=" + author
-          + ", summary=" + summary + ", pathParams=" + pathParams + ", queryParams=" + queryParams
+      return "Method [identity=" + identity + ", declaringClass=" + declaringClass
+          + ", methodName=" + methodName + ", description=" + description + ", version=" + version
+          + ", since=" + since + ", author=" + author + ", summary=" + summary + ", mapping="
+          + mapping + ", pathParams=" + pathParams + ", queryParams=" + queryParams
           + ", requestHeaders=" + requestHeaders + ", deprecatedDate=" + deprecatedDate
-          + ", deprecatedComment=" + deprecatedComment + ", returnType=" + returnType + "]";
+          + ", deprecatedComment=" + deprecatedComment + ", bizCodes=" + bizCodes + ", returnType="
+          + returnType + ", methodParameters=" + methodParameters + ", methodAnnotations="
+          + methodAnnotations + ", additionalDocTags=" + additionalDocTags + "]";
     }
+
+
+    
   }
 
 }

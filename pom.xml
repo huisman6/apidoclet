@@ -93,7 +93,7 @@
 		<module>apidoclet-core</module>
 		<module>apidoclet-model</module>
 		<module>apidoclet-spring-mvc</module>
-		<module>apidoc-maven-plugin</module>
+		<module>apidoclet-maven-plugin</module>
 		<module>apidoclet-test</module>
 	</modules>
 </project>

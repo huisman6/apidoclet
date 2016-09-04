@@ -97,6 +97,7 @@ public final class AnnotationUtils {
       return null;
     }
     Object value = annotationValue.value();
+    System.out.println("value:"+value);
     if (value == null || value instanceof String || Types.isSimpleType(value.getClass().getName())) {
       // 简单类型，直接返回
       return value;
@@ -116,7 +117,7 @@ public final class AnnotationUtils {
       com.sun.javadoc.AnnotationValue[] jas = (com.sun.javadoc.AnnotationValue[]) value;
       List<Object> values = new ArrayList<>();
       for (com.sun.javadoc.AnnotationValue jav : jas) {
-        values.add(deduceAnnotationValue(jav));
+        values.add(jav.value());
       }
       return value;
     }

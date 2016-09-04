@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -399,7 +398,7 @@ class ApiDoclet {
   private TypeInfo resolveTypeInfo(Type type) {
     if (this.typeInfoProviders != null && !this.typeInfoProviders.isEmpty()) {
       for (TypeInfoProvider provider : typeInfoProviders) {
-        if (shouldSkipType(type)) {
+        if (shouldSkipType(type.qualifiedTypeName())) {
           continue;
         }
         TypeInfo info = provider.produce(type, this.options);
@@ -417,12 +416,12 @@ class ApiDoclet {
    * 
    * @author huisman
    */
-  private boolean shouldSkipType(Type type) {
+  private boolean shouldSkipType(String qualifiedTypeName) {
     if (this.skippedTypeFilters == null || this.skippedTypeFilters.isEmpty()) {
       return false;
     }
     for (SkippedTypeFilter filter : skippedTypeFilters) {
-      if (filter.ignored(type, this.options)) {
+      if (filter.ignored(qualifiedTypeName, this.options)) {
         return true;
       }
     }
@@ -434,11 +433,11 @@ class ApiDoclet {
    * 
    * @author huisman
    */
-  private QueryParam resolveQueryParam(Parameter parameter,String paramComment) {
+  private QueryParam resolveQueryParam(Parameter parameter, String paramComment) {
     if (this.queryParamResolvers != null && !this.queryParamResolvers.isEmpty()) {
       for (RestClassMethodQueryParamResolver resolver : this.queryParamResolvers) {
         if (resolver.support(parameter, this.options)) {
-          QueryParam qp = resolver.resolve(parameter,paramComment, this.options);
+          QueryParam qp = resolver.resolve(parameter, paramComment, this.options);
           if (qp == null) {
             continue;
           }
@@ -454,11 +453,11 @@ class ApiDoclet {
    * 
    * @author huisman
    */
-  private PathParam resolvePathParam(Parameter parameter,String paramComment) {
+  private PathParam resolvePathParam(Parameter parameter, String paramComment) {
     if (this.pathParamResolvers != null && !this.pathParamResolvers.isEmpty()) {
       for (RestClassMethodPathParamResolver resolver : this.pathParamResolvers) {
         if (resolver.support(parameter, this.options)) {
-          PathParam qp = resolver.resolve(parameter,paramComment, this.options);
+          PathParam qp = resolver.resolve(parameter, paramComment, this.options);
           if (qp == null) {
             continue;
           }
@@ -475,11 +474,11 @@ class ApiDoclet {
    * 
    * @author huisman
    */
-  private HeaderParam resolveHeaderParam(Parameter parameter,String paramComment) {
+  private HeaderParam resolveHeaderParam(Parameter parameter, String paramComment) {
     if (this.headerParamResolvers != null && !this.headerParamResolvers.isEmpty()) {
       for (RestClassMethodHeaderParamResolver resolver : this.headerParamResolvers) {
         if (resolver.support(parameter, this.options)) {
-          HeaderParam qp = resolver.resolve(parameter,paramComment, this.options);
+          HeaderParam qp = resolver.resolve(parameter, paramComment, this.options);
           if (qp == null) {
             continue;
           }
@@ -510,7 +509,7 @@ class ApiDoclet {
     Map<Integer, BizCode> spiBizCodeMap = new HashMap<>();
 
     for (ClassDoc classDoc : classDocs) {
-      if (shouldSkipType(classDoc.getElementType())) {
+      if (shouldSkipType(classDoc.qualifiedTypeName())) {
         continue;
       }
       // 所有枚举
@@ -799,7 +798,11 @@ class ApiDoclet {
     // 如果没指定版本号
     if (StringUtils.isNullOrEmpty(version)) {
       // 没有则从request path中获取
-      String path = restAccessPoint.getMapping().getPath();
+      String path = null;
+      EndpointMapping mapping = restAccessPoint.getMapping();
+      if (mapping != null) {
+        path = mapping.getPath();
+      }
       // 指定了request path
       if (!StringUtils.isNullOrEmpty(path)) {
         // 以版本号前缀开始，则截取版本号
@@ -959,19 +962,15 @@ class ApiDoclet {
 
       // 生成方法唯一ID
       Parameter[] parameters = methodDoc.parameters();
-      if (parameters == null || parameters.length == 0) {
-        identityStr.append(")");
-        spiMethod.setMethodParameters(Collections.<MethodParameter>emptyList());
-        spiMethod.setIdentity(identityStr.toString());
-        return spiMethod;
+      if (parameters !=null && parameters.length > 0) {
+        for (Parameter parameter : parameters) {
+          identityStr.append(parameter.typeName() + ",");
+        }
+        identityStr.deleteCharAt(identityStr.length() - 1);
       }
-      for (Parameter parameter : parameters) {
-        identityStr.append(parameter.typeName() + ",");
-      }
-      identityStr.deleteCharAt(identityStr.length() - 1);
       identityStr.append(")");
       spiMethod.setIdentity(identityStr.toString());
-
+      
       // 解析方法上的mapping信息
       spiMethod.setMapping(ApiDoclet.this.resolveEndpointMapping(methodDoc.annotations(),
           methodDoc.position()));
@@ -1011,7 +1010,7 @@ class ApiDoclet {
       for (int i = 0; i < len; i++) {
         Parameter parameter = parameters[i];
         // 是否跳过此类型
-        if (ApiDoclet.this.shouldSkipType(parameter.type())) {
+        if (ApiDoclet.this.shouldSkipType(parameter.type().qualifiedTypeName())) {
           continue;
         }
         // 备注
@@ -1024,15 +1023,15 @@ class ApiDoclet {
         QueryParam qp = null;
         PathParam pp = null;
         HeaderParam hp = null;
-        if ((qp = ApiDoclet.this.resolveQueryParam(parameter,comment)) != null) {
+        if ((qp = ApiDoclet.this.resolveQueryParam(parameter, comment)) != null) {
           // 可变参数
           if (i == (len - 1) && methodDoc.isVarArgs() && qp.getType() != null) {
             qp.getType().setArray(true);
           }
           queryParams.add(qp);
-        } else if ((pp = ApiDoclet.this.resolvePathParam(parameter,comment)) != null) {
+        } else if ((pp = ApiDoclet.this.resolvePathParam(parameter, comment)) != null) {
           pathParams.add(pp);
-        } else if ((hp = ApiDoclet.this.resolveHeaderParam(parameter,comment)) != null) {
+        } else if ((hp = ApiDoclet.this.resolveHeaderParam(parameter, comment)) != null) {
           requestHeaders.add(hp);
         }
         // may be more feature..
