@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.dooioo.se.apidoclet.model.util.StandardDocTag;
+
 /**
  * FeignClient接口或者Controller类名、JAX-RS JAVA Bean
  * 
@@ -51,26 +53,53 @@ public class RestClass implements Serializable {
   /**
    * 类上的注解
    */
-  private List<AnnotationInfo> classAnnotations;
+  private JavaAnnotations classAnnotations;
 
   /**
    * 该class里的所有Rest方法
    */
   private List<Method> methods = new ArrayList<>();
 
-
+  /**
+   *类上可能有映射信息
+   */
+  private EndpointMapping endpointMapping;
+  
+  /**
+   * 除了 {@link StandardDocTag}之外，代码中的其他javadoc注释
+   */
+  private JavaDocTags additionalTags=null;
 
   /**
    * 类上的所有注解
    * 
    * @author huisman
    */
-  public List<AnnotationInfo> getClassAnnotations() {
+  public JavaAnnotations getClassAnnotations() {
     return classAnnotations;
   }
 
-  public void setClassAnnotations(List<AnnotationInfo> classAnnotations) {
+  public void setClassAnnotations(JavaAnnotations classAnnotations) {
     this.classAnnotations = classAnnotations;
+  }
+  
+
+  public EndpointMapping getEndpointMapping() {
+    return endpointMapping;
+  }
+  
+  
+
+  public JavaDocTags getAdditionalTags() {
+    return additionalTags;
+  }
+
+  public void setAdditionalTags(JavaDocTags additionalTags) {
+    this.additionalTags = additionalTags;
+  }
+
+  public void setEndpointMapping(EndpointMapping endpointMapping) {
+    this.endpointMapping = endpointMapping;
   }
 
   public Date getBuildAt() {
@@ -158,7 +187,8 @@ public class RestClass implements Serializable {
   @Override
   public String toString() {
     final int maxLen = 90;
-    return "SpiClass [buildAt=" + buildAt + ", lastBuildAt=" + lastBuildAt + ", summary=" + summary
+    return "SpiClass [buildAt=" + buildAt + ", lastBuildAt=" + lastBuildAt+",endpointMapping="
+        +endpointMapping+ ", summary=" + summary
         + ", deprecatedDate=" + deprecatedDate + ", deprecatedComment=" + deprecatedComment
         + ", description=" + description + ", className=" + className + ", packageName="
         + packageName + ", methods="
@@ -250,8 +280,21 @@ public class RestClass implements Serializable {
     /**
      * 方法上的注释
      */
-    private List<AnnotationInfo> methodAnnotations;
+    private JavaAnnotations methodAnnotations;
+    
+    /**
+     * 除了标准javadoctag之外的其他tags
+     */
+    private JavaDocTags additionalDocTags;
+    
+    
+    public JavaDocTags getAdditionalDocTags() {
+      return additionalDocTags;
+    }
 
+    public void setAdditionalDocTags(JavaDocTags additionalDocTags) {
+      this.additionalDocTags = additionalDocTags;
+    }
 
     public List<MethodParameter> getMethodParameters() {
       return methodParameters;
@@ -268,11 +311,11 @@ public class RestClass implements Serializable {
      * 
      * @author huisman
      */
-    public List<AnnotationInfo> getMethodAnnotations() {
+    public JavaAnnotations getMethodAnnotations() {
       return methodAnnotations;
     }
 
-    public void setMethodAnnotations(List<AnnotationInfo> methodAnnotations) {
+    public void setMethodAnnotations(JavaAnnotations methodAnnotations) {
       this.methodAnnotations = methodAnnotations;
     }
 

@@ -1,4 +1,4 @@
-package com.dooioo.se.apidoclet.core.spi;
+package com.dooioo.se.apidoclet.core.spi.filter;
 
 import com.dooioo.se.apidoclet.core.ApiDocletOptions;
 import com.sun.javadoc.MethodDoc;
@@ -10,6 +10,7 @@ public interface RestClassMethodFilter {
   /**
    * 判断当前方法是否是Rest接口
    * @param options 命令行选项
+   * @param methodDoc 方法的javadoc描述
    * @author huisman
    */
   public boolean accept(MethodDoc methodDoc, ApiDocletOptions options);

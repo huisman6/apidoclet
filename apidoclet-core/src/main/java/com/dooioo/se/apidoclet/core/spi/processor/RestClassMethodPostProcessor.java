@@ -1,4 +1,4 @@
-package com.dooioo.se.apidoclet.core.spi.postprocessor;
+package com.dooioo.se.apidoclet.core.spi.processor;
 
 import com.dooioo.se.apidoclet.model.RestClass;
 

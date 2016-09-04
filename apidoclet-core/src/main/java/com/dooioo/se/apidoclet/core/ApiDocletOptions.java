@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.dooioo.se.apidoclet.core.util.StringUtils;
+import com.dooioo.se.apidoclet.model.RestService;
 import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.RootDoc;
 
@@ -88,11 +89,11 @@ public class ApiDocletOptions {
    */
   public static final String SOURCE_PATH = "-sourcepath";
   /**
-   * app名称 {@link RestApp#getName()}
+   * app名称 {@link RestService#getName()}
    */
   public static final String APP = DEFAULT_PREFIX + "app";
   /**
-   * 默认app 描述 {@link RestApp#getDesc()}
+   * 默认app 描述 {@link RestService#getAppName()}
    */
   public static final String APP_NAME = DEFAULT_PREFIX + "appName";
   /**

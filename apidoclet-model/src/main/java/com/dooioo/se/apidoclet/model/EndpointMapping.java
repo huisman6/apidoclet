@@ -27,6 +27,15 @@ public class EndpointMapping implements Serializable {
    */
   private List<Produce> produces;
 
+  /**
+   * 条件参数（http请求参数），可以为null
+   */
+  private List<ParamCondition> requstParamConditions;
+  /**
+   * 条件参数（头部），可以为null
+   */
+  private List<HeaderCondition> requestHeaderConditions;
+
   public EndpointMapping() {
     super();
   }
@@ -42,6 +51,23 @@ public class EndpointMapping implements Serializable {
     this.method = method;
   }
 
+  public List<ParamCondition> getRequstParamConditions() {
+    return requstParamConditions;
+  }
+
+  public void setRequstParamConditions(List<ParamCondition> requstParamConditions) {
+    this.requstParamConditions = requstParamConditions;
+  }
+
+
+  public List<HeaderCondition> getRequestHeaderConditions() {
+    return requestHeaderConditions;
+  }
+
+
+  public void setRequestHeaderConditions(List<HeaderCondition> requestHeaderConditions) {
+    this.requestHeaderConditions = requestHeaderConditions;
+  }
 
 
   public String getPath() {
@@ -150,6 +176,29 @@ public class EndpointMapping implements Serializable {
     }
     fullMapping.setProduces(produceConditions);
 
+
+    // 其余的取并集
+    List<ParamCondition> paramConditions = new ArrayList<>();
+    if (this.requstParamConditions != null && !this.requstParamConditions.isEmpty()) {
+      paramConditions.addAll(this.requstParamConditions);
+    }
+
+    if (provided.requstParamConditions != null && !provided.requstParamConditions.isEmpty()) {
+      paramConditions.addAll(provided.requstParamConditions);
+    }
+    fullMapping.setRequstParamConditions(paramConditions);
+
+    // 其余的取并集
+    List<HeaderCondition> headerConditions = new ArrayList<>();
+    if (this.requestHeaderConditions != null && !this.requestHeaderConditions.isEmpty()) {
+      headerConditions.addAll(this.requestHeaderConditions);
+    }
+
+    if (provided.requestHeaderConditions != null && !provided.requestHeaderConditions.isEmpty()) {
+      headerConditions.addAll(provided.requestHeaderConditions);
+    }
+    fullMapping.setRequestHeaderConditions(headerConditions);
+
     return fullMapping;
   }
 
@@ -162,5 +211,111 @@ public class EndpointMapping implements Serializable {
   public String toString() {
     return "EndpointMapping [path=" + path + ", method=" + method + ", consumes=" + consumes
         + ", produces=" + produces + "]";
+  }
+
+
+
+  public static class RequestCondition implements Serializable {
+    private static final long serialVersionUID = 1L;
+    public static final String DEFAULT_SPLIT_CHAR = "=";
+  }
+
+  /**
+   * 映射信息的参数条件
+   */
+  public static class ParamCondition extends RequestCondition {
+    private static final long serialVersionUID = 1L;
+    /**
+     * 原生字符串，name和value是使用 {@link #DEFAULT_SPLIT_CHAR} 后分隔出来的key/value队
+     */
+    private String name;
+    private String value;
+
+    /**
+     * @param raw
+     * @param name
+     * @param value
+     * @param kind
+     */
+    public ParamCondition(String name, String value) {
+      super();
+      this.name = name;
+      this.value = value;
+    }
+
+    public ParamCondition() {
+      super();
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    public void setValue(String value) {
+      this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return "ConditionParam [ name=" + name + ", value=" + value + "]";
+    }
+  }
+
+
+  /**
+   * header中条件参数
+   */
+  public static class HeaderCondition extends RequestCondition {
+    private static final long serialVersionUID = 1L;
+    /**
+     * 原生字符串，name和value是使用 {@link #DEFAULT_SPLIT_CHAR} 后分隔出来的key/value队
+     */
+    private String name;
+    private String value;
+
+    /**
+     * @param raw
+     * @param name
+     * @param value
+     * @param kind
+     */
+    public HeaderCondition(String name, String value) {
+      super();
+      this.name = name;
+      this.value = value;
+    }
+
+    public HeaderCondition() {
+      super();
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    public void setValue(String value) {
+      this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return "HeaderCondition [ name=" + name + ", value=" + value + "]";
+    }
   }
 }

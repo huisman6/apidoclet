@@ -24,7 +24,7 @@ import com.sun.javadoc.RootDoc;
  * @see http://docs.oracle.com/javase/1.5.0/docs/guide/javadoc/doclet/spec/index.html
  * @see https://docs.oracle.com/javase/6/docs/technotes/guides/javadoc/doclet/overview.html
  */
-public final class ApiDocletBootstrap {
+public final class ApiDocletBootStrap {
 
   /**
    * command line option，必须有此方法。 我们支持：-classdir<br/>
@@ -71,8 +71,6 @@ public final class ApiDocletBootstrap {
     ApiDoclet apiDoclet = builder.
     // 业务码的解析
         enableBizCodeProviders().
-        // 方法参数解析
-        enableMethodParameterResolvers().
         // model 解析
         enableModelProviders().
         // 方法过滤

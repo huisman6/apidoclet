@@ -8,10 +8,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dooioo.se.apidoclet.core.spi.provider.TypeInfoProvider;
+import com.dooioo.se.apidoclet.core.spi.provider.TypeInfoProvider.JavaDocCommentProvider;
 import com.dooioo.se.apidoclet.model.FieldInfo;
 import com.dooioo.se.apidoclet.model.TypeInfo;
 import com.dooioo.se.apidoclet.model.util.Types;
-import com.dooioo.se.apidoclet.model.util.Types.SpiView;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.FieldDoc;
 import com.sun.javadoc.MethodDoc;
@@ -23,8 +24,6 @@ import com.sun.javadoc.WildcardType;
 
 /**
  * @author huisman
- * @version 1.0.0
- * @since 2016年1月16日 Copyright (c) 2016, BookDao All Rights Reserved.
  */
 public final class ClassUtils {
   /**
@@ -38,18 +37,45 @@ public final class ClassUtils {
   private static final String IS_PREFIX = "is";
   private static final int IS_PREFIX_LEN = IS_PREFIX.length();
 
-  private static final Map<String, String> paginationCommentMap = new HashMap<>();
+  /**
+   * 类型信息，可能为null
+   */
+  private static List<TypeInfoProvider> typeInfoProviders = ServiceLoaderUtils
+      .getServicesOrNull(TypeInfoProvider.class);
 
-  static {
-    paginationCommentMap.put("pageList", "实体对象列表");
-    paginationCommentMap.put("pageSize", "每页记录数");
-    paginationCommentMap.put("pageNo", "当前页码，从1开始");
-    paginationCommentMap.put("totalCount", "总记录数");
-    paginationCommentMap.put("totalPage", "总页数");
-    paginationCommentMap.put("nextPage", "下一页页码");
-    paginationCommentMap.put("prePage", "上一页页码");
-    paginationCommentMap.put("firstPage", "是否第一页");
-    paginationCommentMap.put("lastPage", "是否最后一页");
+
+  /**
+   * 判断某个类型是否是集合类型
+   * @param type
+   */
+  private static boolean isCollectionType(Type type) {
+    if (typeInfoProviders == null || typeInfoProviders.isEmpty()) {
+      return false;
+    }
+    for (TypeInfoProvider typeInfoProvider : typeInfoProviders) {
+      if (typeInfoProvider.isCollection(type)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static String getProvidedCommentOrDefault(Type type, String fieldOrMethodName,
+      String defaultComment) {
+    if (typeInfoProviders == null || typeInfoProviders.isEmpty()) {
+      return defaultComment;
+    }
+    String comment = null;
+    for (TypeInfoProvider typeInfoProvider : typeInfoProviders) {
+      JavaDocCommentProvider commentProvider = typeInfoProvider.getFieldOrMethodCommentProvider();
+      if (commentProvider == null
+          || StringUtils.isNullOrEmpty((comment =
+              commentProvider.getComment(type, fieldOrMethodName)))) {
+        continue;
+      }
+      return comment;
+    }
+    return defaultComment;
   }
 
   private ClassUtils() {
@@ -109,7 +135,9 @@ public final class ClassUtils {
           type.setContainerType(fieldDoc.type().qualifiedTypeName());
 
           fieldInfo.setDeclaringClass(classDoc.qualifiedName());
-          fieldInfo.setComment(StringUtils.trim(fieldDoc.commentText()));
+          // 获取注释
+          fieldInfo.setComment(StringUtils.trim(getProvidedCommentOrDefault(
+              classDoc.getElementType(), fieldDoc.name(), fieldDoc.commentText())));
           fieldInfo.setType(type);
           fieldInfo.setName(fieldDoc.name());
           fieldInfos.add(fieldInfo);
@@ -128,7 +156,8 @@ public final class ClassUtils {
       if (fd.isStatic()) {
         continue;
       }
-      fieldCommentMap.put(fd.name(), fd.commentText());
+      fieldCommentMap.put(fd.name(),
+          getProvidedCommentOrDefault(classDoc.getElementType(), fd.name(), fd.commentText()));
     }
     // public getter
     for (MethodDoc methodDoc : methodDocs) {
@@ -149,22 +178,32 @@ public final class ClassUtils {
         continue;
       }
 
+      String fieldName = null;
+      if (methodName.startsWith(GETTER_PREFIX)) {
+        fieldName = (Introspector.decapitalize(methodName.substring(GETTER_PREFIX_LEN)));
+      } else if (methodName.startsWith(IS_PREFIX)) {
+        // boolean 字段
+        fieldName = (Introspector.decapitalize(methodName.substring(IS_PREFIX_LEN)));
+      }
+      // 说明虽然有getter，但是没有声明field
+      if (!fieldCommentMap.containsKey(fieldName)) {
+        continue;
+      }
+
       FieldInfo fieldInfo = new FieldInfo();
       TypeInfo type = getTypeInfo(returnType, providedActualType);
       if (type == null) {
         continue;
       }
       fieldInfo.setType(type);
-
+      fieldInfo.setName(fieldName);
       fieldInfo.setDeclaringClass(methodDoc.containingClass().qualifiedName());
-      if (methodName.startsWith(GETTER_PREFIX)) {
-        fieldInfo.setName(Introspector.decapitalize(methodName.substring(GETTER_PREFIX_LEN)));
-      } else if (methodName.startsWith(IS_PREFIX)) {
-        // boolean 字段
-        fieldInfo.setName(Introspector.decapitalize(methodName.substring(IS_PREFIX_LEN)));
+      // 注释优先取外部配置的，
+      // 其次取方法上的注释，其次是字段上的
+      String comment = getProvidedCommentOrDefault(classDoc.getElementType(), fieldName, null);
+      if (StringUtils.isNullOrEmpty(comment)) {
+        comment = StringUtils.trim(methodDoc.commentText());
       }
-      // 注释优先取方法上的注释，其次是字段上的
-      String comment = StringUtils.trim(methodDoc.commentText());
       if (StringUtils.isNullOrEmpty(comment)) {
         // 字段上的
         comment = StringUtils.trim(fieldCommentMap.get(fieldInfo.getName()));
@@ -179,7 +218,6 @@ public final class ClassUtils {
 
       // 如果有枚举，将枚举值串起来生成注释
       fieldInfo.setComment(commentWithEnumIfAny(comment, returnType.asClassDoc()));
-
       fieldInfos.add(fieldInfo);
     }
     return fieldInfos;
@@ -253,18 +291,13 @@ public final class ClassUtils {
       ParameterizedType pt = elementType.asParameterizedType();
       String ptTypeName = pt.qualifiedTypeName();
 
-      if (Types.isCollectionType(elementType.qualifiedTypeName())) {
+      if (Types.isCollectionType(elementType.qualifiedTypeName()) 
+          || isCollectionType(elementType)) {
         type.setCollection(true);
       } else if (Types.isMap(elementType.qualifiedTypeName())) {
         type.setMap(true);
       }
-      // 有泛型信息,如果是ListView，则转成List.class
-      if (SpiView.LIST_VIEW.equals(ptTypeName)) {
-        type.setContainerType(List.class.getName());
-      } else {
-        type.setContainerType(ptTypeName);
-      }
-
+      type.setContainerType(ptTypeName);
       // 解析实际类型
       Type[] actualTypes = pt.typeArguments();
       // 如果是map的话有两个参数,其他泛型只支持一个参数
@@ -295,116 +328,9 @@ public final class ClassUtils {
         } else {
           type.setActualType(actualClass.qualifiedTypeName());
         }
-
-        // 如果是BEAN VIEW 或者ReponseEntity
-        if (SpiView.BEAN_VIEW.equals(ptTypeName)) {
-          // BeanView实际类型是泛型参数
-          type.setContainerType(
-              actualClass == null ? providedActualType : actualClass.qualifiedTypeName());
-        } else if (ResponseEntity.class.getName().equals(ptTypeName)) {
-          // 如果是ResponseEntity，根据实际参数判断是否是集合类型
-          type.setCollection(Types.isCollectionType(actualTypes[0].qualifiedTypeName()));
-          type.setContainerType(actualTypes[0].qualifiedTypeName());
-        }
       }
     }
     return type;
-  }
-
-  /**
-   * 将返回类型转换为我们规定的类型：ReturyType。</br>
-   * 暂时不支持返回Annotaiton，TypeVariable,比如List<T>，以及WildcardType，比如List<? extends Model>，List<? super
-   * Model>
-   */
-  public static ReturnType toReturnType(Type type) {
-    // 解析返回类型，可能重新封装成Class,或者ParameterizedType
-    ReturnType returnType = new ReturnType();
-    TypeInfo typeInfo = getTypeInfo(type, null);
-    returnType.setType(typeInfo);
-    if (typeInfo == null) {
-      return returnType;
-    }
-    if (typeInfo.isArray() || typeInfo.isEnum() || type instanceof ClassDoc) {
-      // 是数组 or 普通 java class类型
-      ClassDoc classDoc = type.asClassDoc();
-
-      if (Types.isSimpleType(typeInfo.getActualType()) || typeInfo.isEnum()
-          || Types.isWebType(typeInfo.getActualType())) {
-        // 如果是简单类型或web servlet api，不需要指定字段
-        return returnType;
-      }
-      // 主动解析实际类型，递归调用父类
-      List<FieldInfo> fieldInfos = new ArrayList<>();
-      fieldInfos.addAll(ClassUtils.getFieldInfos(classDoc, typeInfo.getActualType()));
-      ClassDoc superDoc = classDoc.superclass();
-      while (superDoc != null && !superDoc.qualifiedTypeName().equals(Object.class.getName())) {
-        fieldInfos.addAll(ClassUtils.getFieldInfos(superDoc, typeInfo.getActualType()));
-        superDoc = superDoc.superclass();
-      }
-      returnType.setFields(fieldInfos);
-      return returnType;
-    } else if (type.isPrimitive()) {
-      // 原始简单类型
-      return returnType;
-    } else if (type instanceof com.sun.javadoc.ParameterizedType) {
-      // 接下来判断是否是泛型参数，比如：List<Model>,ListView<Model>,BeanView<Model>，Set<Model>等
-      // 但是不支持TypeVariable,比如List<T>，以及WildcardType，比如List<? extends Model>，List<? super Model>
-      ParameterizedType parameterizedType = type.asParameterizedType();
-      // 实际参数，仅限一个/两个参数
-      Type[] actualTypes = parameterizedType.typeArguments();
-      // 实际的类型
-      ClassDoc actualClass = null;
-      if (typeInfo.isMap() && actualTypes.length == 2) {
-        // map的话，取第二个
-        actualClass = findAnyFirstClassDoc(actualTypes[1]);
-      } else {
-        // 实际的类型
-        actualClass = findAnyFirstClassDoc(actualTypes[0]);
-      }
-
-      // 如果是Spi view/集合、数组、枚举，则返回实际类型的字段
-      if (actualClass != null) {
-        if (Types.isSpiViewType(type.qualifiedTypeName()) || typeInfo.isArray()
-            || typeInfo.isCollection() || typeInfo.isMap() || typeInfo.isEnum()) {
-          // 不是简单类型
-          if (!Types.isSimpleType(typeInfo.getActualType())) {
-            // 解析实际类型的字段
-            returnType.setFields(ClassUtils.getFieldInfos(actualClass, typeInfo.getActualType()));
-          }
-        } else {
-          List<FieldInfo> fieldInfos =
-              ClassUtils.getFieldInfos(parameterizedType.asClassDoc(), typeInfo.getActualType());
-          // 。。。分页。。。需要特殊处理
-          if (parameterizedType.qualifiedTypeName().equals(Pagination.class.getName())) {
-            postProcessPaginationType(fieldInfos);
-          }
-          returnType.setFields(fieldInfos);
-        }
-
-      }
-
-      return returnType;
-    }
-    throw new UnsupportedOperationException("invalid type:" + type.qualifiedTypeName()
-        + ", only support ParameterizedType&Class&Primitive Type Array 。");
-  }
-
-  /**
-   * 如果是Pagination类型则后处理
-   */
-  private static void postProcessPaginationType(List<FieldInfo> fieldInfos) {
-    if (fieldInfos == null || fieldInfos.size() < 1) {
-      return;
-    }
-    for (FieldInfo fd : fieldInfos) {
-      String comment = paginationCommentMap.get(fd.getName());
-      if (StringUtils.isNullOrEmpty(comment)) {
-        continue;
-      }
-      if (StringUtils.isNullOrEmpty(fd.getComment())) {
-        fd.setComment(comment);
-      }
-    }
   }
 
   /**

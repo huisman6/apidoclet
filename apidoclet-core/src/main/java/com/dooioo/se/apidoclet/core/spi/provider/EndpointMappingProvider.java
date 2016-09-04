@@ -1,4 +1,4 @@
-package com.dooioo.se.apidoclet.core.spi;
+package com.dooioo.se.apidoclet.core.spi.provider;
 
 import com.dooioo.se.apidoclet.core.ApiDocletOptions;
 import com.dooioo.se.apidoclet.model.EndpointMapping;

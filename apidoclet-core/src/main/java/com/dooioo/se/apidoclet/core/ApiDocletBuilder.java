@@ -2,18 +2,20 @@ package com.dooioo.se.apidoclet.core;
 
 import java.util.List;
 
-import com.dooioo.se.apidoclet.core.spi.BizCodeProvider;
-import com.dooioo.se.apidoclet.core.spi.EndpointMappingProvider;
-import com.dooioo.se.apidoclet.core.spi.ModelProvider;
-import com.dooioo.se.apidoclet.core.spi.RestClassMethodFilter;
-import com.dooioo.se.apidoclet.core.spi.RestClassMethodParameterResolver;
-import com.dooioo.se.apidoclet.core.spi.RestServiceFilter;
-import com.dooioo.se.apidoclet.core.spi.RestServicesExporter;
-import com.dooioo.se.apidoclet.core.spi.SkippedTypeFilter;
-import com.dooioo.se.apidoclet.core.spi.TypeInfoProvider;
-import com.dooioo.se.apidoclet.core.spi.postprocessor.RestClassMethodPostProcessor;
-import com.dooioo.se.apidoclet.core.spi.postprocessor.RestClassPostProcessor;
-import com.dooioo.se.apidoclet.core.spi.postprocessor.RestServicePostProcessor;
+import com.dooioo.se.apidoclet.core.spi.exporter.RestServicesExporter;
+import com.dooioo.se.apidoclet.core.spi.filter.RestClassMethodFilter;
+import com.dooioo.se.apidoclet.core.spi.filter.RestServiceFilter;
+import com.dooioo.se.apidoclet.core.spi.filter.SkippedTypeFilter;
+import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodHeaderParamResolver;
+import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodPathParamResolver;
+import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodQueryParamResolver;
+import com.dooioo.se.apidoclet.core.spi.processor.RestClassMethodPostProcessor;
+import com.dooioo.se.apidoclet.core.spi.processor.RestClassPostProcessor;
+import com.dooioo.se.apidoclet.core.spi.processor.RestServicePostProcessor;
+import com.dooioo.se.apidoclet.core.spi.provider.BizCodeProvider;
+import com.dooioo.se.apidoclet.core.spi.provider.EndpointMappingProvider;
+import com.dooioo.se.apidoclet.core.spi.provider.ModelProvider;
+import com.dooioo.se.apidoclet.core.spi.provider.TypeInfoProvider;
 import com.dooioo.se.apidoclet.core.util.ServiceLoaderUtils;
 import com.sun.javadoc.RootDoc;
 
@@ -54,11 +56,6 @@ final class ApiDocletBuilder {
    * 忽略哪些类型
    */
   private List<SkippedTypeFilter> skippedTypeFilters;
-
-  /**
-   * 方法参数的解析
-   */
-  private List<RestClassMethodParameterResolver> methodParameterResolvers;
 
   /**
    * 路径映射信息
@@ -147,17 +144,6 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 加载方法参数解析的SPI实现
-   * 
-   * @author huisman
-   */
-  ApiDocletBuilder enableMethodParameterResolvers() {
-    this.methodParameterResolvers =
-        ServiceLoaderUtils.getServicesOrNull(RestClassMethodParameterResolver.class);
-    return this;
-  }
-
-  /**
    * 判断是否可以忽略某些参数
    * 
    * @author huisman
@@ -226,9 +212,13 @@ final class ApiDocletBuilder {
   ApiDoclet build() {
     return new ApiDoclet(this.options, this.restServiceFilters, this.modelProviders,
         this.restMethodFilters, this.bizCodeProviders, this.typeInfoProviders,
-        this.skippedTypeFilters, this.methodParameterResolvers, this.endpointMappingProviders,
-        this.restServicesExporters, this.restClassMethodPostProcessors,
-        this.restClassPostProcessors, this.restServicePostProcessors);
+        this.skippedTypeFilters,
+        ServiceLoaderUtils.getServicesOrNull(RestClassMethodQueryParamResolver.class),
+        ServiceLoaderUtils.getServicesOrNull(RestClassMethodPathParamResolver.class),
+        ServiceLoaderUtils.getServicesOrNull(RestClassMethodHeaderParamResolver.class),
+        this.endpointMappingProviders, this.restServicesExporters,
+        this.restClassMethodPostProcessors, this.restClassPostProcessors,
+        this.restServicePostProcessors);
   }
 
 }

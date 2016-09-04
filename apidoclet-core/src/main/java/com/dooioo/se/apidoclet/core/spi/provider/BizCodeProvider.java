@@ -1,4 +1,4 @@
-package com.dooioo.se.apidoclet.core.spi;
+package com.dooioo.se.apidoclet.core.spi.provider;
 
 import java.util.List;
 
@@ -6,7 +6,6 @@ import com.dooioo.se.apidoclet.core.ApiDocletOptions;
 import com.dooioo.se.apidoclet.model.BizCode;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.MethodDoc;
-import com.sun.javadoc.RootDoc;
 
 /**
  * 获取当前项目中的业务码，也可能没有

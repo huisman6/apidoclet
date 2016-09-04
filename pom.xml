@@ -7,23 +7,9 @@
 	<packaging>pom</packaging>
 	<properties>
 		<encoding>UTF-8</encoding>
-		<compile.version>1.8</compile.version>
-		<spring.version>4.1.2.RELEASE</spring.version>
-		<junit.version>4.12</junit.version>
+		<compile.version>1.7</compile.version>
 		<javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
 	</properties>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-framework-bom</artifactId>
-				<version>${spring.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<!--部署jar文件到仓库 -->
 	<distributionManagement>
@@ -106,5 +92,8 @@
 	<modules>
 		<module>apidoclet-core</module>
 		<module>apidoclet-model</module>
+		<module>apidoclet-spring-mvc</module>
+		<module>apidoc-maven-plugin</module>
+		<module>apidoclet-test</module>
 	</modules>
 </project>

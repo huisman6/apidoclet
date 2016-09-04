@@ -1,7 +1,6 @@
 package com.dooioo.se.apidoclet.model;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 方法参数的一些context信息
@@ -41,14 +40,14 @@ public class MethodParameter implements Serializable {
   /**
    * 参数上的注解
    */
-  private List<AnnotationInfo> parameterAnnotations;
+  private JavaAnnotations parameterAnnotations;
 
 
-  public List<AnnotationInfo> getParameterAnnotations() {
+  public JavaAnnotations getParameterAnnotations() {
     return parameterAnnotations;
   }
 
-  public void setParameterAnnotations(List<AnnotationInfo> parameterAnnotations) {
+  public void setParameterAnnotations(JavaAnnotations parameterAnnotations) {
     this.parameterAnnotations = parameterAnnotations;
   }
 

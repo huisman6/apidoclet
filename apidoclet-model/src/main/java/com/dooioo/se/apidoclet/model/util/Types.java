@@ -26,31 +26,12 @@ public final class Types {
    * 简单类型及其默认值，包括基本数据类型及其封装类，日期字符串等
    */
   private static final Map<String, Object> SIMPLE_CLASS_TYPES = new HashMap<>();
-
-  public interface SpiView {
-    String BEAN_VIEW = "com.dooioo.se.lorik.spi.view.BeanView";
-    String LIST_VIEW = "com.dooioo.se.lorik.spi.view.ListView";
-  }
-
-  /**
-   * spi view里定义的返回类型
-   */
-  private static final Set<String> SPI_VIEW_TYPES = new HashSet<>(Arrays.asList(SpiView.BEAN_VIEW,
-      SpiView.LIST_VIEW));
-
   /**
    * 表示一个类型是集合类型的，包括数组，Set,List,ArrayList,LinkList,Collection
    */
   private static final Set<String> COLLECTION_TYPES = new HashSet<>(Arrays.asList(
       List.class.getName(), Set.class.getName(), Collection.class.getName(),
-      AbstractCollection.class.getName(), SpiView.LIST_VIEW));
-
-  /**
-   * 是否是servlet api/或Spring MVC里的类型
-   */
-  private static final Set<String> WEB_TYPES = new HashSet<>(Arrays.asList("java.io.InputStream",
-      "java.io.OutputStream", "java.io.PrintWriter", "javax.servlet.http.HttpServletRequest",
-      "javax.servlet.http.HttpServletResponse", "org.springframework.ui.Model"));
+      AbstractCollection.class.getName()));
 
   static {
     SIMPLE_CLASS_TYPES.put(int.class.getName(), 0);
@@ -117,13 +98,6 @@ public final class Types {
   }
 
   /**
-   * 是否是spi view里的返回类型，比如BeanView，ListView等
-   */
-  public static boolean isSpiViewType(String type) {
-    return SPI_VIEW_TYPES.contains(type);
-  }
-
-  /**
    * 判断类型是否是集合类型，先试图加载一次，如果加载不到类，则根据类名判断
    */
   public static boolean isCollectionType(String type) {
@@ -135,13 +109,6 @@ public final class Types {
       return true;
     }
     return COLLECTION_TYPES.contains(type);
-  }
-
-  /**
-   * 是否是web mvc类型
-   */
-  public static boolean isWebType(String type) {
-    return WEB_TYPES.contains(type);
   }
 
   /**
