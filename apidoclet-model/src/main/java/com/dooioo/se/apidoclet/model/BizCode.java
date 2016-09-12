@@ -23,6 +23,11 @@ public class BizCode implements Serializable {
   private String comment;
   
   /**
+   * 业务可能的名称，描述信息，比如字段名。
+   */
+  private String name;
+  
+  /**
    * 业务码可能归属的类名，可以为null
    */
   private String containingClass;
@@ -49,6 +54,14 @@ public class BizCode implements Serializable {
   }
   
   
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
 
   public String getContainingClass() {
     return containingClass;
@@ -82,9 +95,13 @@ public class BizCode implements Serializable {
     this.message = message;
   }
 
+  
+
   @Override
   public String toString() {
-    return "BizCode [code=" + code + ", message=" + message + ", comment=" + comment + "]";
+    return "BizCode [code=" + code + ", message=" + message + ", comment="
+        + comment + ", name=" + name + ", containingClass=" + containingClass
+        + "]";
   }
 
   @Override

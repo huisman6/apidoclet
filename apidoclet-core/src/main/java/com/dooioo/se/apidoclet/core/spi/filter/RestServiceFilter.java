@@ -1,7 +1,6 @@
 package com.dooioo.se.apidoclet.core.spi.filter;
 
 import com.dooioo.se.apidoclet.core.ApiDocletOptions;
-import com.dooioo.se.apidoclet.model.RestService;
 import com.sun.javadoc.ClassDoc;
 
 /**
@@ -16,16 +15,6 @@ public interface RestServiceFilter {
    * @param classDoc 当前类的描述信息
    */
   boolean accept(ClassDoc classDoc, ApiDocletOptions options);
-
-  /**
-   * 判断某个类是否属于当前的服务
-   * 
-   * @author huisman
-   * @version v1
-   * @param qualifiedClassName 类的全称
-   * @param options 命令行选项
-   */
-  boolean include(RestService service, String qualifiedClassName, ApiDocletOptions options);
 
   /**
    * 推断Rest服务的服务名，比如对于@FeignClient来说，serviceId就是服务名，<br/>

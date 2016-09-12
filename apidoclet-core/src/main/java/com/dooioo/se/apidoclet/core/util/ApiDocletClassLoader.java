@@ -2,23 +2,22 @@ package com.dooioo.se.apidoclet.core.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.Arrays;
 
 /**
- * @author huisman
- * @version 1.0.0
- * @since 2016年1月16日 Copyright (c) 2016, BookDao All Rights Reserved.
+ * 类加载器，加载一些class文件，方便反射，可以指定加载的目录，但必须为绝对路径。
  */
 public class ApiDocletClassLoader extends ClassLoader {
   /**
    * class文件所在目录
    */
-  private String classdir;
+  private String[] classpaths;
 
-  public void setClassdir(String classdir) {
-    this.classdir = classdir;
+  public void setClassdir(String... classpaths) {
+    this.classpaths = classpaths;
   }
 
   /**
@@ -28,30 +27,26 @@ public class ApiDocletClassLoader extends ClassLoader {
     super(parent);
   }
 
-
-  /**
-   * 
-   */
-  public ApiDocletClassLoader(String classdir) {
+  public ApiDocletClassLoader(String... classpaths) {
     super();
-    this.classdir = classdir;
+    this.classpaths = classpaths;
   }
-  
- 
+
 
 
   /**
    * @param parent
    */
-  public ApiDocletClassLoader(ClassLoader parent, String classdir) {
+  public ApiDocletClassLoader(ClassLoader parent, String... classpaths) {
     super(parent);
-    this.classdir = classdir;
+    this.classpaths = classpaths;
   }
 
 
 
   @Override
-  protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+  protected Class<?> loadClass(String name, boolean resolve)
+      throws ClassNotFoundException {
     Class<?> result = loadClassInternal(name);
     if (result != null) {
       if (resolve) {
@@ -80,7 +75,7 @@ public class ApiDocletClassLoader extends ClassLoader {
 
   private byte[] loadBytesForClass(String name) throws ClassNotFoundException {
     try (InputStream is = loadClassFile(name);) {
-      
+
       if (is == null) {
         return null;
       }
@@ -94,7 +89,8 @@ public class ApiDocletClassLoader extends ClassLoader {
       out.flush();
       return out.toByteArray();
     } catch (Exception e) {
-      throw new ClassNotFoundException(name + "not found in :" + this.classdir, e);
+      throw new ClassNotFoundException(name + "not found in :"
+          + Arrays.toString(classpaths), e);
     }
   }
 
@@ -102,20 +98,30 @@ public class ApiDocletClassLoader extends ClassLoader {
    * 从指定目录加载类文件
    * 
    * @author huisman
+   * @throws IOException
    */
-  private InputStream  loadClassFile(String name) {
-    //jdk 类，直接返回
+  private InputStream loadClassFile(String name) throws IOException {
+    // jdk 类，直接返回
     if (name.startsWith("java.")) {
-       return null;
+      return null;
     }
-    File classfile =new File(this.classdir,name.replace('.', '/') + ".class");
-    System.out.println("loading class file:"+classfile);
-    try {
-      return new FileInputStream(classfile);
-    } catch (FileNotFoundException e) {
-      //ignored use parent classloader to load
+    if (this.classpaths == null || this.classpaths.length == 0) {
+      return null;
+    }
+    // 扫描所有classpath
+    for (String classpath : classpaths) {
+      if (StringUtils.isNullOrEmpty(classpath)) {
+        continue;
+      }
+      String path =
+          classpath + File.pathSeparator
+              + name.replace('.', File.pathSeparatorChar) + ".class";
+      URL url = this.getClass().getResource(path);
+      if (url == null) {
+        continue;
+      }
+      return url.openStream();
     }
     return null;
   }
-
 }

@@ -7,7 +7,8 @@ import com.dooioo.se.apidoclet.core.ApiDocletOptions;
  */
 public interface SkippedTypeFilter {
   /**
-   * 是否忽略当前类型的解析
+   * 是否忽略当前类型的解析，注意，如果此类型不是你本项目的源代码，则qualifiedTypeName只会返回SimpleClassName。
+   * 比如，javax.servlet.HttpServletRequest，此类不是你源代码里的类型，则qualifiedTypeName=HttpServletRequest。
    * @param type 类型的全限定名称
    * @param options 命令行选项
    */

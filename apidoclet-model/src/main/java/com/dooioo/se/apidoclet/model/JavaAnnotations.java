@@ -47,6 +47,11 @@ public class JavaAnnotations implements Serializable {
     this.allAnnotations.put(annotation.getQualifiedClassName(), annotations);
   }
 
+  @Override
+  public String toString() {
+    return "JavaAnnotations [allAnnotations=" + allAnnotations + "]";
+  }
+
   public static class JavaAnnotation implements Serializable {
     private static final long serialVersionUID = 1L;
     /**
@@ -86,6 +91,14 @@ public class JavaAnnotations implements Serializable {
     public AnnotationValue attribute(String key) {
       return this.attributes.get(key);
     }
+
+    @Override
+    public String toString() {
+      return "JavaAnnotation [qualifiedClassName=" + qualifiedClassName
+          + ", attributes=" + attributes + "]";
+    }
+    
+    
   }
   /**
    * 注解的值，如果为数组，则转换为List

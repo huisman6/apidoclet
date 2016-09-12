@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lifecycles>
+	<lifecycle>
+		<id>apidoc</id>
+		<phases>
+			<phase>
+				<id>apidoc</id>
+			</phase>
+		</phases>
+	</lifecycle>
+</lifecycles>

@@ -3,6 +3,7 @@ package com.dooioo.se.apidoclet.core;
 import java.util.List;
 
 import com.dooioo.se.apidoclet.core.spi.exporter.RestServicesExporter;
+import com.dooioo.se.apidoclet.core.spi.exporter.RestServicesPartitionStrategy;
 import com.dooioo.se.apidoclet.core.spi.filter.RestClassMethodFilter;
 import com.dooioo.se.apidoclet.core.spi.filter.RestServiceFilter;
 import com.dooioo.se.apidoclet.core.spi.filter.SkippedTypeFilter;
@@ -16,7 +17,7 @@ import com.dooioo.se.apidoclet.core.spi.provider.BizCodeProvider;
 import com.dooioo.se.apidoclet.core.spi.provider.EndpointMappingProvider;
 import com.dooioo.se.apidoclet.core.spi.provider.ModelProvider;
 import com.dooioo.se.apidoclet.core.spi.provider.TypeInfoProvider;
-import com.dooioo.se.apidoclet.core.util.ServiceLoaderUtils;
+import com.dooioo.se.apidoclet.model.util.ServiceLoaderUtils;
 import com.sun.javadoc.RootDoc;
 
 /**
@@ -81,7 +82,7 @@ final class ApiDocletBuilder {
    */
   private List<RestServicePostProcessor> restServicePostProcessors;
 
-  public ApiDocletBuilder() {
+  ApiDocletBuilder() {
     super();
   }
 
@@ -99,7 +100,8 @@ final class ApiDocletBuilder {
    * @author huisman
    */
   ApiDocletBuilder enableRestServiceFilters() {
-    this.restServiceFilters = ServiceLoaderUtils.getServicesOrNull(RestServiceFilter.class);
+    this.restServiceFilters =
+        ServiceLoaderUtils.getServicesOrNull(RestServiceFilter.class);
     return this;
   }
 
@@ -109,7 +111,8 @@ final class ApiDocletBuilder {
    * @author huisman
    */
   ApiDocletBuilder enableModelProviders() {
-    this.modelProviders = ServiceLoaderUtils.getServicesOrNull(ModelProvider.class);
+    this.modelProviders =
+        ServiceLoaderUtils.getServicesOrNull(ModelProvider.class);
     return this;
   }
 
@@ -119,7 +122,8 @@ final class ApiDocletBuilder {
    * @author huisman
    */
   ApiDocletBuilder enableBizCodeProviders() {
-    this.bizCodeProviders = ServiceLoaderUtils.getServicesOrNull(BizCodeProvider.class);
+    this.bizCodeProviders =
+        ServiceLoaderUtils.getServicesOrNull(BizCodeProvider.class);
     return this;
   }
 
@@ -129,7 +133,8 @@ final class ApiDocletBuilder {
    * @author huisman
    */
   ApiDocletBuilder enableRestMethodFilters() {
-    this.restMethodFilters = ServiceLoaderUtils.getServicesOrNull(RestClassMethodFilter.class);
+    this.restMethodFilters =
+        ServiceLoaderUtils.getServicesOrNull(RestClassMethodFilter.class);
     return this;
   }
 
@@ -139,7 +144,8 @@ final class ApiDocletBuilder {
    * @author huisman
    */
   ApiDocletBuilder enableTypeInfoProviders() {
-    this.typeInfoProviders = ServiceLoaderUtils.getServicesOrNull(TypeInfoProvider.class);
+    this.typeInfoProviders =
+        ServiceLoaderUtils.getServicesOrNull(TypeInfoProvider.class);
     return this;
   }
 
@@ -149,7 +155,8 @@ final class ApiDocletBuilder {
    * @author huisman
    */
   ApiDocletBuilder enableSkippedTypeFilters() {
-    this.skippedTypeFilters = ServiceLoaderUtils.getServicesOrNull(SkippedTypeFilter.class);
+    this.skippedTypeFilters =
+        ServiceLoaderUtils.getServicesOrNull(SkippedTypeFilter.class);
     return this;
   }
 
@@ -170,7 +177,8 @@ final class ApiDocletBuilder {
    * @author huisman
    */
   ApiDocletBuilder enableRestServicesExports() {
-    this.restServicesExporters = ServiceLoaderUtils.getServicesOrNull(RestServicesExporter.class);
+    this.restServicesExporters =
+        ServiceLoaderUtils.getServicesOrNull(RestServicesExporter.class);
     return this;
   }
 
@@ -181,7 +189,8 @@ final class ApiDocletBuilder {
    */
   ApiDocletBuilder enableRestClassMethodPostProcessors() {
     this.restClassMethodPostProcessors =
-        ServiceLoaderUtils.getServicesOrNull(RestClassMethodPostProcessor.class);
+        ServiceLoaderUtils
+            .getServicesOrNull(RestClassMethodPostProcessor.class);
     return this;
   }
 
@@ -210,15 +219,20 @@ final class ApiDocletBuilder {
 
 
   ApiDoclet build() {
-    return new ApiDoclet(this.options, this.restServiceFilters, this.modelProviders,
-        this.restMethodFilters, this.bizCodeProviders, this.typeInfoProviders,
-        this.skippedTypeFilters,
-        ServiceLoaderUtils.getServicesOrNull(RestClassMethodQueryParamResolver.class),
-        ServiceLoaderUtils.getServicesOrNull(RestClassMethodPathParamResolver.class),
-        ServiceLoaderUtils.getServicesOrNull(RestClassMethodHeaderParamResolver.class),
+    return new ApiDoclet(this.options, this.restServiceFilters,
+        this.modelProviders, this.restMethodFilters, this.bizCodeProviders,
+        this.typeInfoProviders, this.skippedTypeFilters,
+        ServiceLoaderUtils
+            .getServicesOrNull(RestClassMethodQueryParamResolver.class),
+        ServiceLoaderUtils
+            .getServicesOrNull(RestClassMethodPathParamResolver.class),
+        ServiceLoaderUtils
+            .getServicesOrNull(RestClassMethodHeaderParamResolver.class),
         this.endpointMappingProviders, this.restServicesExporters,
         this.restClassMethodPostProcessors, this.restClassPostProcessors,
-        this.restServicePostProcessors);
+        this.restServicePostProcessors,
+        ServiceLoaderUtils
+            .getServicesOrNull(RestServicesPartitionStrategy.class));
   }
 
 }

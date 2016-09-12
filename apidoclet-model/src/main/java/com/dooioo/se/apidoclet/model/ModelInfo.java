@@ -7,6 +7,7 @@ import com.dooioo.se.apidoclet.model.util.Types;
 
 /**
  * rest响应的model
+ * 
  * @author huisman
  */
 public class ModelInfo implements Serializable {
@@ -30,7 +31,6 @@ public class ModelInfo implements Serializable {
 
   public void setClassName(String className) {
     this.className = className;
-    this.getClass().getAnnotations();
     setSimpleClassName(Types.getSimpleTypeName(className));
   }
 

@@ -48,6 +48,13 @@ public class JavaDocTags implements Serializable {
 
 
 
+  @Override
+  public String toString() {
+    return "JavaDocTags [allTags=" + allTags + "]";
+  }
+
+
+
   public static class JavaDocTag implements Serializable {
     private static final long serialVersionUID = 1L;
     /**

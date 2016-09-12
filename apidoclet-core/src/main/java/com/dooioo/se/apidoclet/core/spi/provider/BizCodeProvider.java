@@ -13,14 +13,14 @@ import com.sun.javadoc.MethodDoc;
 public interface BizCodeProvider {
   
   /**
-    * 获取默认提供的业务码
+    * 获取默认提供的业务码，默认提供的业务码全局共享
     * @author huisman
     * @version v1
     * @param options 命令行选项
    */
   List<BizCode> provided(ApiDocletOptions options);
   /**
-    * 从类上获取业务码，如果不存在，返回null
+    * 根据类的元数据信息获取业务码，如果不存在，返回null
     * @author huisman
     * @param classDoc 源文件的描述
     * @param options 命令行选项

@@ -1,0 +1,2 @@
+com.dooioo.se.apidoclet.extension.spring.mvc.filter.ResponseBodyRestClassMethodFilter
+com.dooioo.se.apidoclet.extension.spring.cloud.filter.FeignClientRestClassMethodFilter

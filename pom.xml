@@ -92,8 +92,9 @@
 	<modules>
 		<module>apidoclet-core</module>
 		<module>apidoclet-model</module>
-		<module>apidoclet-spring-mvc</module>
+		<module>apidoclet-extension-spring-mvc</module>
 		<module>apidoclet-maven-plugin</module>
 		<module>apidoclet-test</module>
+		<module>apidoclet-extension-lianjia-sh-se</module>
 	</modules>
 </project>

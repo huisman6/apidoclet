@@ -16,34 +16,4 @@ public interface TypeInfoProvider {
    * @param options 命令行选项
    */
   TypeInfo produce(Type type, ApiDocletOptions options);
-
-  /**
-   * 判断某些类型是否是集合类型
-   * 
-   * @author huisman
-   * @param type javadoc Java类型
-   * @param options 命令行选项
-   */
-  boolean isCollection(Type type);
-
-  /**
-   * 获取字段或方法上的注释
-   * 
-   * @author huisman
-   */
-  JavaDocCommentProvider getFieldOrMethodCommentProvider();
-
-  /**
-   * javadoc注释提供者
-   */
-   interface JavaDocCommentProvider {
-    /**
-     * 获取fieldOrMethodName上的注释
-     * 
-     * @param type class类型
-     * @param fieldOrMethodName 字段或者方法名
-     * @param options 命令行选项
-     */
-    String getComment(Type type, String fieldOrMethodName);
-  }
 }

@@ -8,10 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.dooioo.se.apidoclet.core.spi.provider.TypeInfoProvider;
-import com.dooioo.se.apidoclet.core.spi.provider.TypeInfoProvider.JavaDocCommentProvider;
+import com.dooioo.se.apidoclet.core.spi.provider.JavaDocCommentProvider;
 import com.dooioo.se.apidoclet.model.FieldInfo;
 import com.dooioo.se.apidoclet.model.TypeInfo;
+import com.dooioo.se.apidoclet.model.util.ServiceLoaderUtils;
 import com.dooioo.se.apidoclet.model.util.Types;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.FieldDoc;
@@ -40,34 +40,16 @@ public final class ClassUtils {
   /**
    * 类型信息，可能为null
    */
-  private static List<TypeInfoProvider> typeInfoProviders = ServiceLoaderUtils
-      .getServicesOrNull(TypeInfoProvider.class);
+  private static List<JavaDocCommentProvider> commentProviders =
+      ServiceLoaderUtils.getServicesOrNull(JavaDocCommentProvider.class);
 
-
-  /**
-   * 判断某个类型是否是集合类型
-   * @param type
-   */
-  private static boolean isCollectionType(Type type) {
-    if (typeInfoProviders == null || typeInfoProviders.isEmpty()) {
-      return false;
-    }
-    for (TypeInfoProvider typeInfoProvider : typeInfoProviders) {
-      if (typeInfoProvider.isCollection(type)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static String getProvidedCommentOrDefault(Type type, String fieldOrMethodName,
-      String defaultComment) {
-    if (typeInfoProviders == null || typeInfoProviders.isEmpty()) {
+  private static String getProvidedCommentOrDefault(Type type,
+      String fieldOrMethodName, String defaultComment) {
+    if (commentProviders == null || commentProviders.isEmpty()) {
       return defaultComment;
     }
     String comment = null;
-    for (TypeInfoProvider typeInfoProvider : typeInfoProviders) {
-      JavaDocCommentProvider commentProvider = typeInfoProvider.getFieldOrMethodCommentProvider();
+    for (JavaDocCommentProvider commentProvider : commentProviders) {
       if (commentProvider == null
           || StringUtils.isNullOrEmpty((comment =
               commentProvider.getComment(type, fieldOrMethodName)))) {
@@ -116,13 +98,29 @@ public final class ClassUtils {
    * @return never null
    * @since 2016年1月16日
    */
-  public static List<FieldInfo> getFieldInfos(ClassDoc classDoc, String providedActualType) {
+  public static List<FieldInfo> getFieldInfos(ClassDoc classDoc,
+      String providedActualType) {
     if (classDoc == null) {
       return Collections.<FieldInfo>emptyList();
     }
+    ClassDoc currentClass = classDoc;
+    List<FieldInfo> allFields = new ArrayList<>();
+    // 不是Object或者接口以及抽象类
+    while (!currentClass.qualifiedTypeName().equals(Object.class.getName())
+        && !currentClass.isInterface() && !currentClass.isAbstract()) {
+      allFields.addAll(getFieldsInternal(currentClass, providedActualType));
+      // 迭代到父类
+      currentClass = currentClass.superclass();
+    }
+    return allFields;
+  }
 
+  private static List<FieldInfo> getFieldsInternal(ClassDoc classDoc,
+      String providedActualType) {
+    if (classDoc == null) {
+      return Collections.<FieldInfo>emptyList();
+    }
     List<FieldInfo> fieldInfos = new ArrayList<>();
-
     // 首先判断是否是枚举
     if (classDoc.isEnum()) {
       FieldDoc[] enums = classDoc.enumConstants();
@@ -137,7 +135,7 @@ public final class ClassUtils {
           fieldInfo.setDeclaringClass(classDoc.qualifiedName());
           // 获取注释
           fieldInfo.setComment(StringUtils.trim(getProvidedCommentOrDefault(
-              classDoc.getElementType(), fieldDoc.name(), fieldDoc.commentText())));
+              classDoc, fieldDoc.name(), fieldDoc.commentText())));
           fieldInfo.setType(type);
           fieldInfo.setName(fieldDoc.name());
           fieldInfos.add(fieldInfo);
@@ -156,8 +154,10 @@ public final class ClassUtils {
       if (fd.isStatic()) {
         continue;
       }
-      fieldCommentMap.put(fd.name(),
-          getProvidedCommentOrDefault(classDoc.getElementType(), fd.name(), fd.commentText()));
+      fieldCommentMap.put(
+          fd.name(),
+          getProvidedCommentOrDefault(classDoc, fd.name(),
+              fd.commentText()));
     }
     // public getter
     for (MethodDoc methodDoc : methodDocs) {
@@ -166,8 +166,9 @@ public final class ClassUtils {
 
       // 只查找getter
       if (!methodDoc.isPublic()
-          || (!methodName.startsWith(GETTER_PREFIX) && !methodName.startsWith(IS_PREFIX))
-          || methodDoc.isStatic() || methodDoc.parameters().length > 0
+          || (!methodName.startsWith(GETTER_PREFIX) && !methodName
+              .startsWith(IS_PREFIX)) || methodDoc.isStatic()
+          || methodDoc.parameters().length > 0
           || void.class.getName().equals(returnType.qualifiedTypeName())) {
         continue;
       }
@@ -180,10 +181,12 @@ public final class ClassUtils {
 
       String fieldName = null;
       if (methodName.startsWith(GETTER_PREFIX)) {
-        fieldName = (Introspector.decapitalize(methodName.substring(GETTER_PREFIX_LEN)));
+        fieldName =
+            (Introspector.decapitalize(methodName.substring(GETTER_PREFIX_LEN)));
       } else if (methodName.startsWith(IS_PREFIX)) {
         // boolean 字段
-        fieldName = (Introspector.decapitalize(methodName.substring(IS_PREFIX_LEN)));
+        fieldName =
+            (Introspector.decapitalize(methodName.substring(IS_PREFIX_LEN)));
       }
       // 说明虽然有getter，但是没有声明field
       if (!fieldCommentMap.containsKey(fieldName)) {
@@ -200,7 +203,9 @@ public final class ClassUtils {
       fieldInfo.setDeclaringClass(methodDoc.containingClass().qualifiedName());
       // 注释优先取外部配置的，
       // 其次取方法上的注释，其次是字段上的
-      String comment = getProvidedCommentOrDefault(classDoc.getElementType(), fieldName, null);
+      String comment =
+          getProvidedCommentOrDefault(classDoc, fieldName,
+              null);
       if (StringUtils.isNullOrEmpty(comment)) {
         comment = StringUtils.trim(methodDoc.commentText());
       }
@@ -217,7 +222,8 @@ public final class ClassUtils {
       }
 
       // 如果有枚举，将枚举值串起来生成注释
-      fieldInfo.setComment(commentWithEnumIfAny(comment, returnType.asClassDoc()));
+      fieldInfo.setComment(commentWithEnumIfAny(comment,
+          returnType.asClassDoc()));
       fieldInfos.add(fieldInfo);
     }
     return fieldInfos;
@@ -226,9 +232,11 @@ public final class ClassUtils {
   /**
    * 生成枚举注释，never null，不是枚举 返回"";
    */
-  public static String commentWithEnumIfAny(String originalComment, ClassDoc fieldTypeDoc) {
+  public static String commentWithEnumIfAny(String originalComment,
+      ClassDoc fieldTypeDoc) {
     // 如果是枚举，我们把所有枚举值拼成注释字符串
-    StringBuilder enumCommentBuilder = new StringBuilder(StringUtils.trim(originalComment));
+    StringBuilder enumCommentBuilder =
+        new StringBuilder(StringUtils.trim(originalComment));
     if (fieldTypeDoc == null) {
       return enumCommentBuilder.toString();
     }
@@ -265,11 +273,18 @@ public final class ClassUtils {
     TypeInfo type = new TypeInfo();
     // null，说明不是泛型，检查是否是数组
     String dimension = elementType.dimension();
-    if (!StringUtils.isNullOrEmpty(dimension) && dimension.indexOf(Types.DIMENTION_STR) >= 0) {
+    if (!StringUtils.isNullOrEmpty(dimension)
+        && dimension.indexOf(Types.DIMENTION_STR) >= 0) {
       // ArrayType，javadoc没有此类型，需要判断dimension信息
       type.setArray(true);
-      type.setActualType(elementType.qualifiedTypeName());
-      type.setContainerType(elementType.qualifiedTypeName());
+      // 判断是否是简单类型，如果是简单类型，我们不解析field信息
+      String qt = elementType.qualifiedTypeName();
+      if (!Types.isSimpleType(qt)) {
+        type.setFields(getFieldInfos(elementType.asClassDoc(),
+            providedActualType));
+      }
+      type.setActualType(qt);
+      type.setContainerType(qt);
       ClassDoc cdoc = elementType.asClassDoc();
       if (cdoc != null) {
         type.setEnum(cdoc.isEnum());
@@ -278,21 +293,23 @@ public final class ClassUtils {
       // 类型是java 类
       // 简单类型，设置字段类型
       ClassDoc cd = elementType.asClassDoc();
-      type.setActualType(cd.qualifiedTypeName());
-      type.setContainerType(cd.qualifiedTypeName());
+      String qt = elementType.qualifiedTypeName();
+      if (!Types.isSimpleType(qt)) {
+        type.setFields(getFieldInfos(cd, providedActualType));
+      }
+      type.setActualType(qt);
+      type.setContainerType(qt);
       type.setEnum(cd.isEnum());
     } else if (elementType.isPrimitive()) {
       // 原始类型 int,char
       type.setActualType(elementType.qualifiedTypeName());
       type.setContainerType(elementType.qualifiedTypeName());
     } else if (elementType instanceof ParameterizedType) {
-      // 特殊处理ResponseEntity
       // 泛型
       ParameterizedType pt = elementType.asParameterizedType();
       String ptTypeName = pt.qualifiedTypeName();
 
-      if (Types.isCollectionType(elementType.qualifiedTypeName()) 
-          || isCollectionType(elementType)) {
+      if (Types.isCollectionType(elementType.qualifiedTypeName())) {
         type.setCollection(true);
       } else if (Types.isMap(elementType.qualifiedTypeName())) {
         type.setMap(true);
@@ -316,17 +333,42 @@ public final class ClassUtils {
         } else {
           return null;
         }
+
       } else {
         // 其他的参数,只取第一个泛型参数
         ClassDoc actualClass = findAnyFirstClassDoc(actualTypes[0]);
         if (actualClass == null) {
           // 无法解析实际类型，如果没有提供实际类型，则返回null
           if (StringUtils.isNullOrEmpty(providedActualType)) {
-            return null;
+            // 默认返回Obj
+            providedActualType = Object.class.getName();
           }
           type.setActualType(providedActualType);
         } else {
+          if (!Types.isSimpleType(actualClass.qualifiedTypeName())) {
+            type.setFields(getFieldInfos(actualClass, providedActualType));
+          }
           type.setActualType(actualClass.qualifiedTypeName());
+        }
+      }
+    } else if (elementType instanceof WildcardType
+        || elementType instanceof TypeVariable) {
+      // wild通配符泛型，有上下界 或者类型参数
+      String ptTypeName = elementType.qualifiedTypeName();
+      if (Types.isCollectionType(elementType.qualifiedTypeName())) {
+        type.setCollection(true);
+      }
+      type.setContainerType(ptTypeName);
+      // 解析实际类型，我们只支持实际类型为普通类，不支持泛型嵌套
+      ClassDoc actualType = findAnyFirstClassDoc(elementType);
+      if (actualType == null) {
+        // 解析泛型，只解析一层。
+        type.setActualType(providedActualType == null ? Object.class.getName()
+            : providedActualType);
+      } else {
+        type.setActualType(actualType.qualifiedTypeName());
+        if (!Types.isSimpleType(actualType.qualifiedTypeName())) {
+          type.setFields(getFieldInfos(actualType, providedActualType));
         }
       }
     }

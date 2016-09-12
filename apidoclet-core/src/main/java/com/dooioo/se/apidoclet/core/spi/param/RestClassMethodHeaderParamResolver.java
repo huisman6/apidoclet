@@ -22,6 +22,8 @@ public interface RestClassMethodHeaderParamResolver {
    * @author huisman
    * @param Parameter 参数信息的javadoc描述
    * @param options 命令行参数
+   * @param typeResolver 类型信息解析，nerver null
    */
-  public HeaderParam resolve(Parameter parameter, String paramComment, ApiDocletOptions options);
+  public HeaderParam resolve(TypeInfoResolver typeResolver,
+      Parameter parameter, String paramComment, ApiDocletOptions options);
 }

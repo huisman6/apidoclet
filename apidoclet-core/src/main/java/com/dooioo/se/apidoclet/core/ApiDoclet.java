@@ -17,17 +17,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.dooioo.se.apidoclet.core.handler.DefaultTypeInfoProvider;
 import com.dooioo.se.apidoclet.core.handler.EnumProvider;
 import com.dooioo.se.apidoclet.core.handler.RestClassProvider;
 import com.dooioo.se.apidoclet.core.spi.exporter.RestServicesExporter;
+import com.dooioo.se.apidoclet.core.spi.exporter.RestServicesPartitionStrategy;
 import com.dooioo.se.apidoclet.core.spi.filter.RestClassMethodFilter;
 import com.dooioo.se.apidoclet.core.spi.filter.RestServiceFilter;
 import com.dooioo.se.apidoclet.core.spi.filter.SkippedTypeFilter;
 import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodHeaderParamResolver;
 import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodPathParamResolver;
 import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodQueryParamResolver;
+import com.dooioo.se.apidoclet.core.spi.param.TypeInfoResolver;
 import com.dooioo.se.apidoclet.core.spi.processor.ApiDocProcessContext;
 import com.dooioo.se.apidoclet.core.spi.processor.RestClassMethodPostProcessor;
 import com.dooioo.se.apidoclet.core.spi.processor.RestClassPostProcessor;
@@ -37,7 +41,6 @@ import com.dooioo.se.apidoclet.core.spi.provider.EndpointMappingProvider;
 import com.dooioo.se.apidoclet.core.spi.provider.ModelProvider;
 import com.dooioo.se.apidoclet.core.spi.provider.TypeInfoProvider;
 import com.dooioo.se.apidoclet.core.util.AnnotationUtils;
-import com.dooioo.se.apidoclet.core.util.ApiDocletClassLoader;
 import com.dooioo.se.apidoclet.core.util.StringUtils;
 import com.dooioo.se.apidoclet.model.Artifact;
 import com.dooioo.se.apidoclet.model.BizCode;
@@ -73,10 +76,6 @@ import com.sun.javadoc.Type;
  * 文档解析
  */
 class ApiDoclet {
-  // 默认classes加载器，如果我们需要加载类
-  public static ApiDocletClassLoader APIDOCLET_CLASSES_LOADER = new ApiDocletClassLoader(
-      ApiDoclet.class.getClassLoader());
-
   /**
    * 命令行参数
    */
@@ -136,6 +135,13 @@ class ApiDoclet {
   private List<RestServicesExporter> restServicesExporters;
 
   /**
+   * 多个微服务，如果将model，业务码以及其他类分组到合适的微服务中。
+   */
+  private List<RestServicesPartitionStrategy> restServicesPartitionStrategies =
+      null;
+
+
+  /**
    * 类上的后续处理
    */
   private List<RestClassPostProcessor> restClassPostProcessors;
@@ -162,9 +168,12 @@ class ApiDoclet {
    */
   private RestServiceResovler restServiceResovler = new RestServiceResovler();
 
-  public ApiDoclet(ApiDocletOptions options, List<RestServiceFilter> restServiceFilters,
-      List<ModelProvider> modelProviders, List<RestClassMethodFilter> restMethodFilters,
-      List<BizCodeProvider> bizCodeProviders, List<TypeInfoProvider> typeInfoProviders,
+  ApiDoclet(ApiDocletOptions options,
+      List<RestServiceFilter> restServiceFilters,
+      List<ModelProvider> modelProviders,
+      List<RestClassMethodFilter> restMethodFilters,
+      List<BizCodeProvider> bizCodeProviders,
+      List<TypeInfoProvider> typeInfoProviders,
       List<SkippedTypeFilter> skippedTypeFilters,
       List<RestClassMethodQueryParamResolver> queryParamResolvers,
       List<RestClassMethodPathParamResolver> pathParamResolvers,
@@ -173,14 +182,22 @@ class ApiDoclet {
       List<RestServicesExporter> restServicesExporters,
       List<RestClassMethodPostProcessor> restClassMethodPostProcessors,
       List<RestClassPostProcessor> restClassPostProcessors,
-      List<RestServicePostProcessor> restServicePostProcessors) {
+      List<RestServicePostProcessor> restServicePostProcessors,
+      List<RestServicesPartitionStrategy> restServicesPartitionStrategies) {
     super();
     this.options = options;
     this.restServiceFilters = restServiceFilters;
     this.modelProviders = modelProviders;
     this.restMethodFilters = restMethodFilters;
     this.bizCodeProviders = bizCodeProviders;
-    this.typeInfoProviders = typeInfoProviders;
+    this.typeInfoProviders = new ArrayList<>();
+    if (typeInfoProviders != null) {
+      // 按顺序添加，外部提供的可能不是ArrayList,我们转换为顺序访问的
+      this.typeInfoProviders.addAll(typeInfoProviders);
+    }
+    // 添加默认类型提供者，优先级最低
+    this.typeInfoProviders.add(new DefaultTypeInfoProvider());
+
     this.skippedTypeFilters = skippedTypeFilters;
     this.pathParamResolvers = pathParamResolvers;
     this.headerParamResolvers = headerParamResolvers;
@@ -190,6 +207,7 @@ class ApiDoclet {
     this.restClassMethodPostProcessors = restClassMethodPostProcessors;
     this.restClassPostProcessors = restClassPostProcessors;
     this.restServicePostProcessors = restServicePostProcessors;
+    this.restServicesPartitionStrategies = restServicesPartitionStrategies;
   }
 
 
@@ -198,14 +216,16 @@ class ApiDoclet {
    * 
    * @author huisman
    */
-  private EndpointMapping resolveEndpointMapping(AnnotationDesc[] classOrMethodAnnotations,
-      SourcePosition position) {
-    if (this.endpointMappingProviders == null || this.endpointMappingProviders.isEmpty()) {
+  private EndpointMapping resolveEndpointMapping(
+      AnnotationDesc[] classOrMethodAnnotations, SourcePosition position) {
+    if (this.endpointMappingProviders == null
+        || this.endpointMappingProviders.isEmpty()) {
       return null;
     }
 
     for (EndpointMappingProvider provider : this.endpointMappingProviders) {
-      EndpointMapping mapping = provider.produce(classOrMethodAnnotations, this.options, position);
+      EndpointMapping mapping =
+          provider.produce(classOrMethodAnnotations, this.options, position);
       if (mapping == null) {
         continue;
       }
@@ -219,15 +239,18 @@ class ApiDoclet {
    * 
    * @author huisman
    */
-  private boolean belongToCurrentRestService(RestService restService, String qualifiedClassName) {
-    if (this.restServiceFilters != null && !this.restServiceFilters.isEmpty()) {
-      for (RestServiceFilter filter : this.restServiceFilters) {
-        if (filter.include(restService, qualifiedClassName, this.options)) {
+  private boolean belongToCurrentRestService(RestService restService,
+      String qualifiedClassName) {
+    if (this.restServicesPartitionStrategies != null
+        && !this.restServicesPartitionStrategies.isEmpty()) {
+      for (RestServicesPartitionStrategy filter : this.restServicesPartitionStrategies) {
+        if (filter.belongTo(restService, qualifiedClassName, this.options)) {
           return true;
         }
       }
       return false;
     }
+    // 默认属于任何一个微服务。
     return true;
   }
 
@@ -237,8 +260,10 @@ class ApiDoclet {
    * @author huisman
    */
   private void exportRestServices(RestServices restServices) {
-    if (this.restServicesExporters == null || this.restServicesExporters.isEmpty()) {
-      this.options.getDocReporter().printWarning("============>> 没有找到RestServicesExporter。");
+    if (this.restServicesExporters == null
+        || this.restServicesExporters.isEmpty()) {
+      this.options.getDocReporter().printWarning(
+          "============>> 没有找到RestServicesExporter。");
       return;
     }
     for (RestServicesExporter restServicesExporter : restServicesExporters) {
@@ -362,7 +387,8 @@ class ApiDoclet {
     List<BizCode> bizCodes = new ArrayList<BizCode>();
     if (this.bizCodeProviders != null && !this.bizCodeProviders.isEmpty()) {
       for (BizCodeProvider provider : bizCodeProviders) {
-        List<BizCode> providedBizCodes = provider.produce(classDoc, this.options);
+        List<BizCode> providedBizCodes =
+            provider.produce(classDoc, this.options);
         if (providedBizCodes != null && !providedBizCodes.isEmpty()) {
           bizCodes.addAll(providedBizCodes);
         }
@@ -380,7 +406,8 @@ class ApiDoclet {
     List<BizCode> bizCodes = new ArrayList<BizCode>();
     if (this.bizCodeProviders != null && !this.bizCodeProviders.isEmpty()) {
       for (BizCodeProvider provider : bizCodeProviders) {
-        List<BizCode> providedBizCodes = provider.produce(methodDoc, this.options);
+        List<BizCode> providedBizCodes =
+            provider.produce(methodDoc, this.options);
         if (providedBizCodes != null && !providedBizCodes.isEmpty()) {
           bizCodes.addAll(providedBizCodes);
         }
@@ -422,6 +449,8 @@ class ApiDoclet {
     }
     for (SkippedTypeFilter filter : skippedTypeFilters) {
       if (filter.ignored(qualifiedTypeName, this.options)) {
+        options.getDocReporter().printNotice(
+            "ignored type:" + qualifiedTypeName);
         return true;
       }
     }
@@ -437,7 +466,13 @@ class ApiDoclet {
     if (this.queryParamResolvers != null && !this.queryParamResolvers.isEmpty()) {
       for (RestClassMethodQueryParamResolver resolver : this.queryParamResolvers) {
         if (resolver.support(parameter, this.options)) {
-          QueryParam qp = resolver.resolve(parameter, paramComment, this.options);
+          QueryParam qp = resolver.resolve(new TypeInfoResolver() {
+
+            @Override
+            public TypeInfo resolve(Type type) {
+              return ApiDoclet.this.resolveTypeInfo(type);
+            }
+          }, parameter, paramComment, this.options);
           if (qp == null) {
             continue;
           }
@@ -457,7 +492,13 @@ class ApiDoclet {
     if (this.pathParamResolvers != null && !this.pathParamResolvers.isEmpty()) {
       for (RestClassMethodPathParamResolver resolver : this.pathParamResolvers) {
         if (resolver.support(parameter, this.options)) {
-          PathParam qp = resolver.resolve(parameter, paramComment, this.options);
+          PathParam qp = resolver.resolve(new TypeInfoResolver() {
+
+            @Override
+            public TypeInfo resolve(Type type) {
+              return ApiDoclet.this.resolveTypeInfo(type);
+            }
+          }, parameter, paramComment, this.options);
           if (qp == null) {
             continue;
           }
@@ -474,11 +515,19 @@ class ApiDoclet {
    * 
    * @author huisman
    */
-  private HeaderParam resolveHeaderParam(Parameter parameter, String paramComment) {
-    if (this.headerParamResolvers != null && !this.headerParamResolvers.isEmpty()) {
+  private HeaderParam resolveHeaderParam(Parameter parameter,
+      String paramComment) {
+    if (this.headerParamResolvers != null
+        && !this.headerParamResolvers.isEmpty()) {
       for (RestClassMethodHeaderParamResolver resolver : this.headerParamResolvers) {
         if (resolver.support(parameter, this.options)) {
-          HeaderParam qp = resolver.resolve(parameter, paramComment, this.options);
+          HeaderParam qp = resolver.resolve(new TypeInfoResolver() {
+
+            @Override
+            public TypeInfo resolve(Type type) {
+              return ApiDoclet.this.resolveTypeInfo(type);
+            }
+          }, parameter, paramComment, this.options);
           if (qp == null) {
             continue;
           }
@@ -556,7 +605,8 @@ class ApiDoclet {
       restApp.setApiDocJson(apiDocJson);
       // 后续处理
       ApiDocProcessContext context =
-          new ApiDocProcessContext.Default(spiModelMap, spiBizCodeMap, this.options);
+          new ApiDocProcessContext.Default(spiModelMap, spiBizCodeMap,
+              this.options);
       // 等所有model解析了之后，最后解析一次返回值的字段是泛型model的、业务码
       postProcessSpiClass(restApp, context);
       // 处理附加信息，比如构建时间，maven构件信息
@@ -580,9 +630,9 @@ class ApiDoclet {
     if (options.isPrint()) {
       options.getDocReporter().printNotice("\n");
       options.getDocReporter().printNotice(
-          "finally resolved =========================================== as follow ");
+          "finally resolved ============================== as follow json ");
       options.getDocReporter().printNotice("\n");
-      options.getDocReporter().printNotice(restApps.toString());
+      options.getDocReporter().printNotice(JSON.toJSONString(restApps));
       options.getDocReporter().printNotice("\n");
     }
 
@@ -633,7 +683,8 @@ class ApiDoclet {
     }
     List<BizCode> currentAppBizCodes = new ArrayList<>();
     for (BizCode bizCode : spiBizCodes) {
-      if (this.belongToCurrentRestService(restApp, bizCode.getContainingClass())) {
+      if (this
+          .belongToCurrentRestService(restApp, bizCode.getContainingClass())) {
         currentAppBizCodes.add(bizCode);
       }
     }
@@ -645,13 +696,15 @@ class ApiDoclet {
    */
   private ApiDocJson parseApiDocletJson(ApiDocletOptions options) {
     ApiDocJson apiDocJson = new ApiDocJson();
-    String projectRootDir = options.optionValue(ApiDocletOptions.PROJECT_ROOT_DIR);
+    String projectRootDir =
+        options.optionValue(ApiDocletOptions.PROJECT_ROOT_DIR);
     try {
       Path path = Paths.get(projectRootDir, "apidoclet.json");
 
       if (!path.toFile().exists()) {
         options.getDocReporter().printNotice(
-            "apidoclet.json not found ,ignored,file path: " + path.toAbsolutePath());
+            "apidoclet.json not found ,ignored,file path: "
+                + path.toAbsolutePath());
         return apiDocJson;
       }
 
@@ -692,7 +745,9 @@ class ApiDoclet {
               EnvVariable.Row row = new EnvVariable.Row();
               // 每列的值不能超过headers的数量
               String[] columnValues = new String[headers.length];
-              int columnLen = (headers.length > columns.size()) ? columns.size() : headers.length;
+              int columnLen =
+                  (headers.length > columns.size()) ? columns.size()
+                      : headers.length;
               for (int j = 0; j < columnLen; j++) {
                 columnValues[j] = columns.getString(j);
               }
@@ -713,7 +768,8 @@ class ApiDoclet {
           if ("env".equals(configKey)) {
             continue;
           }
-          apiDocJson.getConfig().put(configKey, configJson.getString(configKey));
+          apiDocJson.getConfig()
+              .put(configKey, configJson.getString(configKey));
         }
       }
 
@@ -726,9 +782,11 @@ class ApiDoclet {
   /**
    * 设置rest app构建信息
    */
-  private void postProcessRestService(RestService restApp, ApiDocProcessContext context) {
+  private void postProcessRestService(RestService restApp,
+      ApiDocProcessContext context) {
     // 客户端实现
-    if (this.restServicePostProcessors != null && !this.restServicePostProcessors.isEmpty()) {
+    if (this.restServicePostProcessors != null
+        && !this.restServicePostProcessors.isEmpty()) {
       for (RestServicePostProcessor processor : restServicePostProcessors) {
         processor.postProcess(restApp, context);
       }
@@ -758,9 +816,10 @@ class ApiDoclet {
     }
   }
 
-  private void postProccessRestClass(RestService restService, RestClass restClass,
-      ApiDocProcessContext context) {
-    if (this.restClassPostProcessors != null && !this.restClassPostProcessors.isEmpty()) {
+  private void postProccessRestClass(RestService restService,
+      RestClass restClass, ApiDocProcessContext context) {
+    if (this.restClassPostProcessors != null
+        && !this.restClassPostProcessors.isEmpty()) {
       for (RestClassPostProcessor processor : restClassPostProcessors) {
         processor.postProcess(restClass, restService, context);
       }
@@ -771,7 +830,8 @@ class ApiDoclet {
   /**
    * 对SpiMethod做后续处理
    */
-  private void postProcessSpiMethod(RestClass spiClass, ApiDocProcessContext context) {
+  private void postProcessSpiMethod(RestClass spiClass,
+      ApiDocProcessContext context) {
     List<RestClass.Method> methods = spiClass.getMethods();
     if (methods != null && !methods.isEmpty()) {
       for (RestClass.Method method : methods) {
@@ -827,12 +887,14 @@ class ApiDoclet {
    */
   private Artifact resolveArtifactIfAny(ApiDocletOptions options) {
     com.dooioo.se.apidoclet.model.Artifact artifact = new Artifact();
-    artifact.setGroupId(options.optionValue(ApiDocletOptions.ARTIFACT_GROUP_ID));
+    artifact
+        .setGroupId(options.optionValue(ApiDocletOptions.ARTIFACT_GROUP_ID));
     artifact.setArtifactId(options.optionValue(ApiDocletOptions.ARTIFACT_ID));
     artifact.setVersion(options.optionValue(ApiDocletOptions.ARTIFACT_VERSION));
 
     // 读取readme
-    String projectRootDir = options.optionValue(ApiDocletOptions.PROJECT_ROOT_DIR);
+    String projectRootDir =
+        options.optionValue(ApiDocletOptions.PROJECT_ROOT_DIR);
     if (!StringUtils.isNullOrEmpty(projectRootDir)) {
       File rootDir = new File(projectRootDir);
       if (!rootDir.isDirectory()) {
@@ -849,7 +911,8 @@ class ApiDoclet {
         File readme = candicateFiles[0];
         artifact.setReadmeFileName(readme.getName());
 
-        try (BufferedReader reader = Files.newBufferedReader(Paths.get(readme.getAbsolutePath()))) {
+        try (BufferedReader reader =
+            Files.newBufferedReader(Paths.get(readme.getAbsolutePath()))) {
           StringBuilder cotentSb = new StringBuilder(500);
           char[] buffer = new char[256];
           int count = -1;
@@ -872,12 +935,14 @@ class ApiDoclet {
     public void resolveRestService(ClassDoc classDoc, ApiDocletOptions options,
         Map<String, RestService> resolvedRestServiceMap) {
 
-      String serviceName = ApiDoclet.this.filterRestClassAndGetServiceName(classDoc);
+      String serviceName =
+          ApiDoclet.this.filterRestClassAndGetServiceName(classDoc);
       if (StringUtils.isNullOrEmpty(serviceName)) {
         return;
       }
       // 推断appName，如果找不到，则默认为serviceName
-      String providedAppName = options.optionValue(ApiDocletOptions.DEFAULT_PREFIX + serviceName);
+      String providedAppName =
+          options.optionValue(ApiDocletOptions.DEFAULT_PREFIX + serviceName);
       if (StringUtils.isNullOrEmpty(providedAppName)) {
         providedAppName = options.getAppName();
       }
@@ -892,12 +957,14 @@ class ApiDoclet {
         app = resolvedRestServiceMap.get(app.getApp());
       }
       // 生成Rest的javadoc tag/Java Annotation。
-      RestClass spiClass = ApiDoclet.this.restClassProvider.produce(classDoc, options);
+      RestClass spiClass =
+          ApiDoclet.this.restClassProvider.produce(classDoc, options);
       // 解析类上可能有的mapping信息
-      spiClass.setEndpointMapping(ApiDoclet.this.resolveEndpointMapping(classDoc.annotations(),
-          classDoc.position()));
+      spiClass.setEndpointMapping(ApiDoclet.this.resolveEndpointMapping(
+          classDoc.annotations(), classDoc.position()));
 
-      options.getDocReporter().printNotice("found rest class:" + classDoc.qualifiedName());
+      options.getDocReporter().printNotice(
+          "found rest class:" + classDoc.qualifiedName());
       app.addSpiClass(spiClass);
 
       // 解析所有方法
@@ -915,12 +982,14 @@ class ApiDoclet {
     /**
      * 解析提供Rest服务的方法。
      */
-    private void process(ClassDoc classDoc, ApiDocletOptions options, RestClass restClass) {
+    private void process(ClassDoc classDoc, ApiDocletOptions options,
+        RestClass restClass) {
       options.getDocReporter().printNotice(
           "processing methods in class: " + classDoc.qualifiedName());
       // 找到我们感兴趣的类了,开始解析方法
       MethodDoc[] methods = classDoc.methods();
       if (methods == null || methods.length == 0) {
+        options.getDocReporter().printNotice("methods not found.");
         return;
       }
       for (MethodDoc methodDoc : methods) {
@@ -928,7 +997,8 @@ class ApiDoclet {
           // 初始化方法，初始化注解、javadoc注释等
           RestClass.Method method = initRestClassMethod(methodDoc);
           // 方法的返回值
-          TypeInfo typeInfo = ApiDoclet.this.resolveTypeInfo(methodDoc.returnType());
+          TypeInfo typeInfo =
+              ApiDoclet.this.resolveTypeInfo(methodDoc.returnType());
           method.setReturnType(typeInfo);
 
           // 解析方法上可能有的业务码
@@ -951,18 +1021,20 @@ class ApiDoclet {
     private RestClass.Method initRestClassMethod(MethodDoc methodDoc) {
       RestClass.Method spiMethod = new RestClass.Method();
       // 设置元数据信息
-      String declaringClassName = methodDoc.containingClass().qualifiedTypeName();
+      String declaringClassName =
+          methodDoc.containingClass().qualifiedTypeName();
       spiMethod.setDeclaringClass(declaringClassName);
       spiMethod.setMethodName(methodDoc.name());
 
       // 方法标识：类名#方法名#返回类型，例如: com.xxx.xxx.ICityService#findById(int,string)
       StringBuilder identityStr =
-          new StringBuilder(declaringClassName + RestClass.Method.IDENTITY_SPILIT_CHAR
+          new StringBuilder(declaringClassName
+              + RestClass.Method.IDENTITY_SPILIT_CHAR
               + spiMethod.getMethodName() + "(");
 
       // 生成方法唯一ID
       Parameter[] parameters = methodDoc.parameters();
-      if (parameters !=null && parameters.length > 0) {
+      if (parameters != null && parameters.length > 0) {
         for (Parameter parameter : parameters) {
           identityStr.append(parameter.typeName() + ",");
         }
@@ -970,10 +1042,10 @@ class ApiDoclet {
       }
       identityStr.append(")");
       spiMethod.setIdentity(identityStr.toString());
-      
+
       // 解析方法上的mapping信息
-      spiMethod.setMapping(ApiDoclet.this.resolveEndpointMapping(methodDoc.annotations(),
-          methodDoc.position()));
+      spiMethod.setMapping(ApiDoclet.this.resolveEndpointMapping(
+          methodDoc.annotations(), methodDoc.position()));
 
       // 解析方法上的javadoc tag和注解
       processMethodDocTag(methodDoc, spiMethod, options);
@@ -984,8 +1056,8 @@ class ApiDoclet {
       return spiMethod;
     }
 
-    private void processMethodParameter(MethodDoc methodDoc, RestClass.Method method,
-        ApiDocletOptions options) {
+    private void processMethodParameter(MethodDoc methodDoc,
+        RestClass.Method method, ApiDocletOptions options) {
       // 参数注释,参数名=参数注释
       ParamTag[] paramTags = methodDoc.paramTags();
       Map<String, String> paramCommentMap = new HashMap<>();
@@ -1014,10 +1086,11 @@ class ApiDoclet {
           continue;
         }
         // 备注
-        String comment = anyComment ? paramCommentMap.get(parameter.name()) : null;
+        String comment =
+            anyComment ? paramCommentMap.get(parameter.name()) : null;
         // 处理方法参数
-        methodParameters.add(resolveMethodParameter(methodDoc, parameter, comment, i,
-            i == (len - 1)));
+        methodParameters.add(resolveMethodParameter(methodDoc, parameter,
+            comment, i, i == (len - 1)));
 
         // 解析参数
         QueryParam qp = null;
@@ -1053,8 +1126,8 @@ class ApiDoclet {
      * @param paramIndex 参数索引
      * @param lastParam 是否是最后一个参数
      */
-    private MethodParameter resolveMethodParameter(MethodDoc methodDoc, Parameter parameter,
-        String comment, int paramIndex, boolean lastParam) {
+    private MethodParameter resolveMethodParameter(MethodDoc methodDoc,
+        Parameter parameter, String comment, int paramIndex, boolean lastParam) {
       // 方法参数
       MethodParameter methodParameter = new MethodParameter();
       methodParameter.setComment(comment);
@@ -1072,8 +1145,8 @@ class ApiDoclet {
       }
       // 参数类型
       Type type = parameter.type();
-      methodParameter.setTypeInfo(com.dooioo.se.apidoclet.core.util.ClassUtils.getTypeInfo(type,
-          null));
+      //解析方法类型
+      methodParameter.setTypeInfo(ApiDoclet.this.resolveTypeInfo(type));
 
       // 解析参数注解
       AnnotationDesc[] annotationDescs = methodDoc.annotations();
@@ -1083,7 +1156,8 @@ class ApiDoclet {
           // 解析所有注解
           JavaAnnotation javaAnnotation =
               new JavaAnnotation(AnnotationUtils.attributesFor(annotationDesc));
-          javaAnnotation.setQualifiedClassName(annotationDesc.annotationType().qualifiedTypeName());
+          javaAnnotation.setQualifiedClassName(annotationDesc.annotationType()
+              .qualifiedTypeName());
           javaAnnotations.add(javaAnnotation);
         }
         methodParameter.setParameterAnnotations(javaAnnotations);
@@ -1091,12 +1165,13 @@ class ApiDoclet {
       return methodParameter;
     }
 
-    private void processMethodDocTag(MethodDoc methodDoc, RestClass.Method spiMethod,
-        ApiDocletOptions options) {
+    private void processMethodDocTag(MethodDoc methodDoc,
+        RestClass.Method spiMethod, ApiDocletOptions options) {
       // 版本号
       Tag[] versionTags = methodDoc.tags(StandardDocTag.TAG_VERSION);
       String version =
-          ((versionTags == null || versionTags.length == 0) ? "" : versionTags[0].text().trim());
+          ((versionTags == null || versionTags.length == 0) ? ""
+              : versionTags[0].text().trim());
       // 如果版本号不存在则设置为默认版本号。RequestMapping解析的时候，如果发现version依旧为空，则从requestPath中解析
       // 这是在ApiDoclet的最后几步执行此逻辑
       if (StringUtils.isNullOrEmpty(version)) {
@@ -1117,17 +1192,20 @@ class ApiDoclet {
       // since,如果不存在，则new Date()
       Tag[] sinceTags = methodDoc.tags(StandardDocTag.TAG_SINCE);
       String since =
-          ((sinceTags == null || sinceTags.length == 0 || StringUtils.isNullOrEmpty(sinceTags[0]
-              .text())) ? new SimpleDateFormat("yyyy年M月d日").format(new Date()) : StringUtils
-              .trim(sinceTags[0].text()));
+          ((sinceTags == null || sinceTags.length == 0 || StringUtils
+              .isNullOrEmpty(sinceTags[0].text())) ? new SimpleDateFormat(
+              "yyyy年M月d日").format(new Date()) : StringUtils.trim(sinceTags[0]
+              .text()));
       spiMethod.setSince(since);
 
       boolean deprecated =
-          AnnotationUtils.isPresent(methodDoc.annotations(), Deprecated.class.getName());
+          AnnotationUtils.isPresent(methodDoc.annotations(),
+              Deprecated.class.getName());
       Tag[] deprecatedTags = methodDoc.tags(StandardDocTag.TAG_DEPREACTED);
       if (deprecatedTags != null && deprecatedTags.length > 0) {
         deprecated = true;
-        spiMethod.setDeprecatedComment(StringUtils.trim(deprecatedTags[0].text()));
+        spiMethod.setDeprecatedComment(StringUtils.trim(deprecatedTags[0]
+            .text()));
       }
       if (deprecated) {
         spiMethod.setDeprecatedDate(new Date());
@@ -1137,8 +1215,8 @@ class ApiDoclet {
       Tag[] summaryTags = methodDoc.tags(StandardDocTag.TAG_SUMMARY);
       String summary =
           ((summaryTags == null || summaryTags.length == 0 || StringUtils
-              .isNullOrEmpty(summaryTags[0].text())) ? methodDoc.name() : StringUtils
-              .trim(summaryTags[0].text()));
+              .isNullOrEmpty(summaryTags[0].text())) ? methodDoc.name()
+              : StringUtils.trim(summaryTags[0].text()));
       spiMethod.setSummary(summary);
 
       String comment = methodDoc.commentText();
@@ -1149,8 +1227,10 @@ class ApiDoclet {
 
       // 要忽略标注的javadoc tag注释
       Set<String> skippedTags =
-          new HashSet<>(Arrays.asList(StandardDocTag.TAG_VERSION, StandardDocTag.TAG_AUTHOR,
-              StandardDocTag.TAG_DEPREACTED, StandardDocTag.TAG_SINCE, StandardDocTag.TAG_SUMMARY));
+          new HashSet<>(Arrays.asList('@' + StandardDocTag.TAG_VERSION,
+              '@' + StandardDocTag.TAG_AUTHOR,
+              '@' + StandardDocTag.TAG_DEPREACTED,
+              '@' + StandardDocTag.TAG_SINCE, '@' + StandardDocTag.TAG_SUMMARY));
       JavaDocTags docTags = new JavaDocTags();
       if (allTags != null && allTags.length > 0) {
         for (Tag tag : allTags) {
@@ -1170,7 +1250,8 @@ class ApiDoclet {
           // 解析所有注解
           JavaAnnotation javaAnnotation =
               new JavaAnnotation(AnnotationUtils.attributesFor(annotationDesc));
-          javaAnnotation.setQualifiedClassName(annotationDesc.annotationType().qualifiedTypeName());
+          javaAnnotation.setQualifiedClassName(annotationDesc.annotationType()
+              .qualifiedTypeName());
           javaAnnotations.add(javaAnnotation);
         }
         spiMethod.setMethodAnnotations(javaAnnotations);

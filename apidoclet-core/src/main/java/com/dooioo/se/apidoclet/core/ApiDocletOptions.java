@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.dooioo.se.apidoclet.core.util.ApiDocletClassLoader;
 import com.dooioo.se.apidoclet.core.util.StringUtils;
 import com.dooioo.se.apidoclet.model.RestService;
 import com.sun.javadoc.DocErrorReporter;
@@ -25,16 +26,18 @@ public class ApiDocletOptions {
   /**
    * 支持的命令行参数为key,value两个长度的选项
    */
-  private static final Set<String> SUPPORT_OPTIONS_LEN2 = new HashSet<>(Arrays.asList(
-      ApiDocletOptions.CLASS_DIR, ApiDocletOptions.VERSION, ApiDocletOptions.ARTIFACT_ID,
-      ApiDocletOptions.ARTIFACT_VERSION, ApiDocletOptions.ARTIFACT_GROUP_ID,
-      ApiDocletOptions.APP_NAME, ApiDocletOptions.APP, ApiDocletOptions.EXPORT_TO));
+  private static final Set<String> SUPPORT_OPTIONS_LEN2 = new HashSet<>(
+      Arrays.asList(ApiDocletOptions.CLASS_DIR, ApiDocletOptions.VERSION,
+          ApiDocletOptions.ARTIFACT_ID, ApiDocletOptions.ARTIFACT_VERSION,
+          ApiDocletOptions.ARTIFACT_GROUP_ID, ApiDocletOptions.APP_NAME,
+          ApiDocletOptions.APP, ApiDocletOptions.EXPORT_TO));
 
   /**
    * 仅支持key，长度为1的选项
    */
-  private static final Set<String> SUPPORT_OPTIONS_LEN1 = new HashSet<>(Arrays.asList(
-      ApiDocletOptions.PRINT, ApiDocletOptions.IGNORE_VIRTUAL_PATH));
+  private static final Set<String> SUPPORT_OPTIONS_LEN1 = new HashSet<>(
+      Arrays.asList(ApiDocletOptions.PRINT,
+          ApiDocletOptions.IGNORE_VIRTUAL_PATH));
 
   /**
    * 默认选项值里的分隔符
@@ -63,12 +66,14 @@ public class ApiDocletOptions {
   /**
    * 工程根目录
    */
-  public static final String PROJECT_ROOT_DIR = DEFAULT_PREFIX + "projectRootDir";
+  public static final String PROJECT_ROOT_DIR = DEFAULT_PREFIX
+      + "projectRootDir";
 
   /**
    * jar groupId
    */
-  public static final String ARTIFACT_GROUP_ID = DEFAULT_PREFIX + "artifactGroupId";
+  public static final String ARTIFACT_GROUP_ID = DEFAULT_PREFIX
+      + "artifactGroupId";
 
   /**
    * jar artifactId
@@ -78,12 +83,14 @@ public class ApiDocletOptions {
   /**
    * jar ARTIFACT_VERSION
    */
-  public static final String ARTIFACT_VERSION = DEFAULT_PREFIX + "artifactVersion";
+  public static final String ARTIFACT_VERSION = DEFAULT_PREFIX
+      + "artifactVersion";
 
   /**
    * 是否忽略虚拟路径
    */
-  public static final String IGNORE_VIRTUAL_PATH = DEFAULT_PREFIX + "ignoreVirtualPath";
+  public static final String IGNORE_VIRTUAL_PATH = DEFAULT_PREFIX
+      + "ignoreVirtualPath";
   /**
    * 源文件路径，java doc标注参数
    */
@@ -104,7 +111,12 @@ public class ApiDocletOptions {
   /**
    * 不能修改
    */
-  private Map<String, String> othersOptions =null;
+  private Map<String, String> othersOptions = null;
+
+  /**
+   * api 文档的类加载器，根据classdir和classpath加载特定类
+   */
+  private ClassLoader apidocletClassLoader = null;
   /**
    * 源文件编译后classes所在目录，我们可能要从源文件中查找BizCode
    */
@@ -220,7 +232,17 @@ public class ApiDocletOptions {
   public String getExportTo() {
     return exportTo;
   }
+  
+  
 
+
+  /**
+    * API文档的类加载器，会从classdir以及classpath里搜索加载特定类
+    * @author huisman
+   */
+  public ClassLoader getApidocletClassLoader() {
+    return apidocletClassLoader;
+  }
 
   /**
    * 当前应用的标识，如果是微服务，则为微服务的服务名称
@@ -261,9 +283,10 @@ public class ApiDocletOptions {
 
   @Override
   public String toString() {
-    return "ApiDocletOptions [classdir=" + classdir + ", exportTo=" + exportTo + ", app=" + app
-        + ", appName=" + appName + ", ignoreVirtualPath=" + ignoreVirtualPath + ", buildIpAddress="
-        + buildIpAddress + ", buildBy=" + buildBy + ", print=" + print + ", version=" + version
+    return "ApiDocletOptions [classdir=" + classdir + ", exportTo=" + exportTo
+        + ", app=" + app + ", appName=" + appName + ", ignoreVirtualPath="
+        + ignoreVirtualPath + ", buildIpAddress=" + buildIpAddress
+        + ", buildBy=" + buildBy + ", print=" + print + ", version=" + version
         + "]";
   }
 
@@ -292,7 +315,7 @@ public class ApiDocletOptions {
     // 程序启动参数
     String[][] options = rootDoc.options();
     ApiDocletOptions apiDocletOptions = new ApiDocletOptions();
-    Map<String,String> otherOptions=new HashMap<>();
+    Map<String, String> otherOptions = new HashMap<>();
     for (int i = 0; i < options.length; i++) {
       String[] input = options[i];
       if (input.length < 1) {
@@ -344,7 +367,8 @@ public class ApiDocletOptions {
       } catch (Exception e) {
         e.printStackTrace();
       }
-      apiDocletOptions.buildIpAddress = (ipAddress + " " + System.getProperty("os.name"));
+      apiDocletOptions.buildIpAddress =
+          (ipAddress + " " + System.getProperty("os.name"));
 
       rootDoc.printNotice(Arrays.toString(options[i]));
     }
@@ -360,16 +384,23 @@ public class ApiDocletOptions {
     rootDoc.printNotice("\n");
 
     apiDocletOptions.docReporter = (rootDoc);
-    //不可修改
-    apiDocletOptions.othersOptions=Collections.unmodifiableMap(otherOptions);
+    // 不可修改
+    apiDocletOptions.othersOptions = Collections.unmodifiableMap(otherOptions);
+    
+    // 默认classes加载器，如果我们需要加载类
+    String classdir=apiDocletOptions.classdir;
+    
+    apiDocletOptions.apidocletClassLoader =
+        new ApiDocletClassLoader(ApiDoclet.class.getClassLoader(),classdir);
     return apiDocletOptions;
   }
-  
+
 
   /**
    * command line option，必须有此方法。 我们支持：-classdir<br/>
    * javadoc自动调用以决定命令行option加上option的参数值的总长度。<br/>
    * (每个option可能有值，也可能无值，javadoc会把选项放在一个二维数组里，返回值可以用来设置第二维数组的长度）
+   * 
    * @author huisman
    */
   public static int optionLength(String option) {
