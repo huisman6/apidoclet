@@ -1,32 +1,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.dooioo.se.apidoclet</groupId>
-	<artifactId>apidoclet</artifactId>
-	<version>1.0.0</version>
+	<groupId>org.apidoclet</groupId>
+	<artifactId>apidoclet-parent</artifactId>
+	<version>1.0.1</version>
 	<packaging>pom</packaging>
 	<properties>
 		<encoding>UTF-8</encoding>
 		<compile.version>1.7</compile.version>
+		<toolsjar>${java.home}/../lib/tools.jar</toolsjar>
 		<javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
 	</properties>
-
-	<!--部署jar文件到仓库 -->
-	<distributionManagement>
-		<repository>
-			<id>nexus</id>
-			<name>Internal Releases</name>
-			<url>http://nexus.dooioo.org/nexus/content/repositories/releases/</url>
-			<uniqueVersion>false</uniqueVersion>
-		</repository>
-
-		<snapshotRepository>
-			<id>nexus</id>
-			<name>Internal Snapshots</name>
-			<url>http://nexus.dooioo.org/nexus/content/repositories/snapshots/</url>
-			<uniqueVersion>false</uniqueVersion>
-		</snapshotRepository>
-	</distributionManagement>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -57,7 +42,6 @@
 					<skipTests>true</skipTests>
 				</configuration>
 			</plugin>
-			<!-- jar插件 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -94,8 +78,6 @@
 		<module>apidoclet-model</module>
 		<module>apidoclet-extension-spring-mvc</module>
 		<module>apidoclet-maven-plugin</module>
-		<module>apidoclet-test</module>
-		<module>apidoclet-extension-lianjia-sh-se</module>
 		<module>apidoclet-server</module>
 	</modules>
 </project>

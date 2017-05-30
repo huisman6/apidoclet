@@ -4,14 +4,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.dooioo.se.apidoclet.core.spi.processor.ProcessorContext;
-import com.dooioo.se.apidoclet.core.spi.processor.post.RestClassMethodPostProcessor;
-import com.dooioo.se.apidoclet.model.BizCode;
-import com.dooioo.se.apidoclet.model.JavaAnnotations;
-import com.dooioo.se.apidoclet.model.JavaAnnotations.AnnotationValue;
-import com.dooioo.se.apidoclet.model.JavaAnnotations.JavaAnnotation;
-import com.dooioo.se.apidoclet.model.RestClass;
-import com.dooioo.se.apidoclet.model.RestClass.Method;
+import org.apidoclet.core.spi.processor.ProcessorContext;
+import org.apidoclet.core.spi.processor.post.RestClassMethodPostProcessor;
+import org.apidoclet.model.BizCode;
+import org.apidoclet.model.JavaAnnotations;
+import org.apidoclet.model.RestClass;
+import org.apidoclet.model.JavaAnnotations.AnnotationValue;
+import org.apidoclet.model.JavaAnnotations.JavaAnnotation;
+import org.apidoclet.model.RestClass.Method;
+
 import com.dooioo.se.lorik.spi.view.support.LorikRest;
 
 /**

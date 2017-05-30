@@ -42,7 +42,7 @@ public @interface FeignClient {
      * serviceId}. Either serviceId or url must be specified but not both. Can be
      * specified as property key, eg: ${propertyKey}.
      */
-    //@AliasFor("name")
+    @AliasFor("name")
     String value() default "";
 
     /**

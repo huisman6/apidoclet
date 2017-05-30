@@ -7,10 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.dooioo.se.apidoclet.core.ApiDocletOptions;
-import com.dooioo.se.apidoclet.core.spi.provider.BizCodeProvider;
-import com.dooioo.se.apidoclet.core.util.ClassUtils;
-import com.dooioo.se.apidoclet.model.BizCode;
+import org.apidoclet.core.ApiDocletOptions;
+import org.apidoclet.core.spi.provider.BizCodeProvider;
+import org.apidoclet.core.util.ClassUtils;
+import org.apidoclet.model.BizCode;
+
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.FieldDoc;
 import com.sun.javadoc.MethodDoc;

@@ -2,15 +2,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.dooioo.se.apidoclet</groupId>
-		<artifactId>apidoclet</artifactId>
-		<version>1.0.0</version>
+		<groupId>org.apidoclet</groupId>
+		<artifactId>apidoclet-parent</artifactId>
+		<version>1.0.1</version>
 	</parent>
 	<artifactId>apidoclet-extension-spring-mvc</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
-	<properties>
-		<toolsjar>${java.home}/../lib/tools.jar</toolsjar>
-	</properties>
+	<version>1.0.1-SNAPSHOT</version>
 	<dependencies>
 		<dependency>
 			<groupId>jdk.tools</groupId>
@@ -21,9 +18,9 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
-			<groupId>${project.parent.groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>apidoclet-core</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>

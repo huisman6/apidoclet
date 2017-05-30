@@ -2,13 +2,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.dooioo.se.apidoclet</groupId>
-		<artifactId>apidoclet</artifactId>
-		<version>1.0.0</version>
+		<artifactId>apidoclet-parent</artifactId>
+		<groupId>org.apidoclet</groupId>
+		<version>1.0.1</version>
 	</parent>
 	<artifactId>apidoclet-maven-plugin</artifactId>
 	<packaging>maven-plugin</packaging>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.1-SNAPSHOT</version>
 
 	<properties>
 		<mavenVersion>3.2.1</mavenVersion>
@@ -41,11 +41,11 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- java doc 解析 -->
+		<!-- java doc parse -->
 		<dependency>
-			<groupId>${project.parent.groupId}</groupId>
-			<artifactId>apidoclet-extension-lianjia-sh-se</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>apidoclet-extension-spring-mvc</artifactId>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 

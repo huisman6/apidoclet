@@ -11,7 +11,7 @@
 			<configuration>
 				<phases>
 					<apidoc>
-						com.dooioo.se.apidoclet:apidoclet-maven-plugin:${project.version}:deploy
+						org.apidoclet:apidoclet-maven-plugin:${project.version}:deploy
 					</apidoc>
 				</phases>
 			</configuration>
@@ -28,7 +28,7 @@
 				</phases>
 				<default-phases>
 					<apidoc>
-						com.dooioo.se.apidoclet:apidoclet-maven-plugin:deploy
+						org.apidoclet:apidoclet-maven-plugin:deploy
 					</apidoc>
 				</default-phases>
 			</configuration>

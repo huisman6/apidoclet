@@ -1,11 +1,12 @@
 package com.dooioo.se.apidoclet.extension.sh.lianjie.se.provider;
 
-import com.dooioo.se.apidoclet.core.ApiDocletOptions;
-import com.dooioo.se.apidoclet.core.spi.provider.ModelProvider;
-import com.dooioo.se.apidoclet.core.util.ClassUtils;
-import com.dooioo.se.apidoclet.core.util.StringUtils;
-import com.dooioo.se.apidoclet.model.ModelInfo;
-import com.dooioo.se.apidoclet.model.util.Types;
+import org.apidoclet.core.ApiDocletOptions;
+import org.apidoclet.core.spi.provider.ModelProvider;
+import org.apidoclet.core.util.ClassUtils;
+import org.apidoclet.core.util.StringUtils;
+import org.apidoclet.model.ModelInfo;
+import org.apidoclet.model.util.Types;
+
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.PackageDoc;
 

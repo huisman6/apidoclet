@@ -1,0 +1,2 @@
+org.apidoclet.extension.spring.mvc.filter.ResponseBodyRestClassMethodFilter
+org.apidoclet.extension.spring.cloud.filter.FeignClientRestClassMethodFilter
