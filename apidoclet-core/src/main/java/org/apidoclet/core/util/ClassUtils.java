@@ -136,7 +136,7 @@ public final class ClassUtils {
           type.setEnum(true);
           type.setContainerType(fieldDoc.type().qualifiedTypeName());
 
-          fieldInfo.setDeclaringClass(classDoc.qualifiedName());
+          fieldInfo.setDeclaredClass(classDoc.qualifiedName());
           // 获取注释
           fieldInfo.setComment(StringUtils.trim(getProvidedCommentOrDefault(
               classDoc, fieldDoc.name(), fieldDoc.commentText())));
@@ -204,7 +204,7 @@ public final class ClassUtils {
       }
       fieldInfo.setType(type);
       fieldInfo.setName(fieldName);
-      fieldInfo.setDeclaringClass(methodDoc.containingClass().qualifiedName());
+      fieldInfo.setDeclaredClass(methodDoc.containingClass().qualifiedName());
       // 注释优先取外部配置的，
       // 其次取方法上的注释，其次是字段上的
       String comment =

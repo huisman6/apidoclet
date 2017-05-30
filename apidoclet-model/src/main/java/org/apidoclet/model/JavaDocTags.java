@@ -69,20 +69,19 @@ public class JavaDocTags implements Serializable {
     /**
      * tag name </p> 
      * 
-     * example ：@param userCode ==> name= userCode
+     * example ：@param balabala ==> name= @param
      */
     private String name;
 
     /**
      * tag category </p>
-     * 
-     * example ：@param userCode ==> kind = @param
+     * example ：@return balabala ==> kind = @param
      */
     private String kind;
     /**
-     * tag description (the remaining part except the kind and name) </p> 
+     * tag description (usually,the remaining part except the kind ) </p> 
      * 
-     * example ：@param userCode userCode example ====> text= userCode example
+     * example ：@return  balabala ====> text= balabala
      */
     private String text;
 

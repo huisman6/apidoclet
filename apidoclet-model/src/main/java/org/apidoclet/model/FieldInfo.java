@@ -30,7 +30,7 @@ public class FieldInfo implements Serializable {
    * which class contains current field ,it's a canonical(full qualified) type name
    * eg:  {@code java.lang.String}
    */
-  private String declaringClass;
+  private String declaredClass;
 
   /**
    * nested fields when current field type is a complex java bean model,
@@ -62,14 +62,16 @@ public class FieldInfo implements Serializable {
     this.name = name;
   }
 
-  public String getDeclaringClass() {
-    return declaringClass;
+  
+
+
+  public String getDeclaredClass() {
+    return declaredClass;
   }
 
-  public void setDeclaringClass(String declaringClass) {
-    this.declaringClass = declaringClass;
+  public void setDeclaredClass(String declaredClass) {
+    this.declaredClass = declaredClass;
   }
-
 
   public List<FieldInfo> getNestedFields() {
     return nestedFields;
@@ -82,7 +84,7 @@ public class FieldInfo implements Serializable {
   @Override
   public String toString() {
     return "FieldInfo [comment=" + comment + ", type=" + type + ", name=" + name
-        + ", declaringClass=" + declaringClass + ", modelFields=" + nestedFields + "]";
+        + ", declaredClass=" + declaredClass + ", modelFields=" + nestedFields + "]";
   }
 
 
