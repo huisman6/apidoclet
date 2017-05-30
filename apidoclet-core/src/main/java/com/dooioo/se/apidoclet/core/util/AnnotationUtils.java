@@ -1,6 +1,7 @@
 package com.dooioo.se.apidoclet.core.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,7 @@ public final class AnnotationUtils {
         }
       }
     }
-    return new HashMap<>();
+    return Collections.emptyMap();
   }
 
   /**
@@ -74,7 +75,7 @@ public final class AnnotationUtils {
    */
   public static Map<String, AnnotationValue> attributesFor(
       AnnotationDesc annotationDesc) {
-    Map<String, AnnotationValue> attributes = new HashMap<>();
+    Map<String, AnnotationValue> attributes = new HashMap<String,AnnotationValue>();
     if (annotationDesc != null) {
       ElementValuePair[] pairs = annotationDesc.elementValues();
       if (pairs != null && pairs.length > 0) {
@@ -124,7 +125,7 @@ public final class AnnotationUtils {
       // annotationValue类型，数组类型
       com.sun.javadoc.AnnotationValue[] jas =
           (com.sun.javadoc.AnnotationValue[]) value;
-      List<Object> values = new ArrayList<>();
+      List<Object> values = new ArrayList<Object>();
       for (com.sun.javadoc.AnnotationValue jav : jas) {
         values.add(deduceAnnotationValue(jav));
       }
@@ -134,7 +135,7 @@ public final class AnnotationUtils {
   }
 
   /**
-   * 检查特定类型的标注是否存在。
+   * 检查特定类型的注解是否存在。
    * 
    * @author huisman
    * @param annotationDescs

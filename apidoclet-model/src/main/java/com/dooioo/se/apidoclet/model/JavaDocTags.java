@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 所有javadoc Tags，收集类或者方法上的javadoc tag;
+ * all javadoc tags on class or method level
  */
 public class JavaDocTags implements Serializable {
   private static final long serialVersionUID = 1L;

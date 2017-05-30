@@ -9,7 +9,7 @@ import com.dooioo.se.apidoclet.model.ModelInfo;
 /**
  * @summary Copyright (c) 2016, Lianjia Group All Rights Reserved.
  */
-public interface ApiDocProcessContext {
+public interface ProcessorContext {
   /**
    * 根据类名查找已经解析的model信息
    * 
@@ -22,7 +22,7 @@ public interface ApiDocProcessContext {
    * 
    * @author huisman
    */
-  BizCode getBizCode(Integer code);
+  BizCode getBizCode(String code);
 
   /**
    * 获取命令行选项
@@ -31,16 +31,16 @@ public interface ApiDocProcessContext {
    */
   ApiDocletOptions getOpitons();
 
-  static class Default implements ApiDocProcessContext {
+  static class Default implements ProcessorContext {
     private Map<String, ModelInfo> modelMap;
-    private Map<Integer, BizCode> spiBizCodeMap;
+    private Map<String, BizCode> spiBizCodeMap;
     private ApiDocletOptions options;
 
     /**
      * @param modelMap
      * @param spiBizCodeMap
      */
-    public Default(Map<String, ModelInfo> modelMap, Map<Integer, BizCode> spiBizCodeMap,
+    public Default(Map<String, ModelInfo> modelMap, Map<String, BizCode> spiBizCodeMap,
         ApiDocletOptions options) {
       super();
       this.modelMap = modelMap;
@@ -54,7 +54,7 @@ public interface ApiDocProcessContext {
     }
 
     @Override
-    public BizCode getBizCode(Integer code) {
+    public BizCode getBizCode(String code) {
       return this.spiBizCodeMap.get(code);
     }
 

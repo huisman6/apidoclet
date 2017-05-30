@@ -3,13 +3,13 @@ package com.dooioo.se.apidoclet.model;
 import java.io.Serializable;
 
 /**
- * Http访问method
+ * http method description, GET/POST/PUT/HEAD/TRACE...etc
  * @author huisman
  */
 public class HttpMethod implements Serializable {
   private static final long serialVersionUID = 1L;
   /**
-   * Http Method ,大写
+   * http method(upper-case)
    */
   private String name;
 

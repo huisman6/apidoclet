@@ -5,8 +5,8 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import com.dooioo.se.apidoclet.core.ApiDocletOptions;
-import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodPathParamResolver;
-import com.dooioo.se.apidoclet.core.spi.param.TypeInfoResolver;
+import com.dooioo.se.apidoclet.core.spi.http.PathParamResolver;
+import com.dooioo.se.apidoclet.core.spi.http.TypeInfoResolver;
 import com.dooioo.se.apidoclet.core.util.AnnotationUtils;
 import com.dooioo.se.apidoclet.core.util.StringUtils;
 import com.dooioo.se.apidoclet.model.JavaAnnotations.AnnotationValue;
@@ -17,7 +17,7 @@ import com.sun.javadoc.Parameter;
 /**
  * PathParam解析
  */
-public class PathVariableResolver implements RestClassMethodPathParamResolver {
+public class PathVariableResolver implements PathParamResolver {
 
   @Override
   public boolean support(Parameter parameter, ApiDocletOptions options) {

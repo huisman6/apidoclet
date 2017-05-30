@@ -1,4 +1,4 @@
-package com.dooioo.se.apidoclet.core.handler;
+package com.dooioo.se.apidoclet.core.provider;
 
 import java.util.Date;
 

@@ -3,42 +3,43 @@ package com.dooioo.se.apidoclet.model;
 import java.io.Serializable;
 
 /**
- * 方法参数的一些context信息
+ * java method parameter description,include parameter comment、parameter annotation、parameter type etc
  */
 public class MethodParameter implements Serializable {
   private static final long serialVersionUID = 1L;
   /**
-   * 是否可变参数
+   * varargs? , see {@link java.lang.reflect.Method#isVarArgs()}
    */
   private boolean varargs;
+  
   /**
-   * 方法名
+   * method name ,see {@link java.lang.reflect.Method#getName()}
    */
   private String methodName;
   /**
-   * 参数索引
+   * parameter index ,see {@link java.lang.reflect.Method#getParameters()}
    */
   private int index;
   /**
-   * 参数注释
+   * parameter comment, see {@code @param} java doc tag
    */
   private String comment;
 
   /**
-   * 参数类型
+   * parameter type ,full qualified type name
    */
   private String className;
   /**
-   * 参数名
+   * parameter name,see {@code Parameter#getName()}
    */
   private String name;
   /**
-   * 如果参数类型的一些描述，客户端实现的时候不能为null
+   * parameter type info,not null
    */
   private TypeInfo typeInfo;
 
   /**
-   * 参数上的注解
+   * all java annotations on this parameter
    */
   private JavaAnnotations parameterAnnotations;
 

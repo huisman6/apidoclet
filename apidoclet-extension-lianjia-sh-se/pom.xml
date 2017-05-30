@@ -6,6 +6,7 @@
 		<artifactId>apidoclet</artifactId>
 		<version>1.0.0</version>
 	</parent>
+	<version>1.0.0-SNAPSHOT</version>
 	<artifactId>apidoclet-extension-lianjia-sh-se</artifactId>
 	<properties>
 		<toolsjar>${java.home}/../lib/tools.jar</toolsjar>

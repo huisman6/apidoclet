@@ -5,7 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 聚合多个{@code RestService}，是当前项目所有服务的抽象
+ * 聚合多个{@code RestService}，是当前项目所有服务的抽象，
+ * 通常情况下，只有一个项目只有单个服务。
  * 
  * @author huisman
  */

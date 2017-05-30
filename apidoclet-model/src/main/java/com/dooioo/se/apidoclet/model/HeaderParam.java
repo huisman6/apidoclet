@@ -3,31 +3,33 @@ package com.dooioo.se.apidoclet.model;
 import java.io.Serializable;
 
 /**
- * http 请求头，对应SpringMVC的@RequestHeader 或者JAX-RS的@HeaderParam
+ * http request header abstract，similar to SpringMVC {@code @RequestHeader} or JAX-RS
+ * {@code @HeaderParam}
+ * 
  * @author huisman
  */
 public class HeaderParam implements Serializable {
   private static final long serialVersionUID = 1L;
   /**
-   * 是否必须
+   * required or not
    */
   private boolean required;
   /**
-   * 默认值
+   * default http header value
    */
   private String defaultValue;
   /**
-   * 路径参数名
+   * actual http header name
    */
   private String name;
 
   /**
-   * 对应的JAVA类型
+   * corresponding java type description,include fields
    */
   private TypeInfo type;
 
   /**
-   * JavaDoc 备注
+   * java comment that read from souce code
    */
   private String comment;
 
@@ -92,8 +94,8 @@ public class HeaderParam implements Serializable {
 
   @Override
   public String toString() {
-    return "RequestHeader [required=" + required + ", defaultValue=" + defaultValue + ", name="
-        + name + ", comment=" + comment + "]";
+    return "RequestHeader [required=" + required + ", defaultValue="
+        + defaultValue + ", name=" + name + ", comment=" + comment + "]";
   }
 
 

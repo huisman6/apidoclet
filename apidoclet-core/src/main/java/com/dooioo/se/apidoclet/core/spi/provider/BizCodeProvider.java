@@ -30,9 +30,10 @@ public interface BizCodeProvider {
     * 从方法上解析业务码，如果不存在，返回null
     * @author huisman
     * @param methodDoc 源文件中方法的描述
+    * @param classDoc  class info
     * @param apiDocletOptions 命令行选项
    */
-  List<BizCode> produce(MethodDoc methodDoc,ApiDocletOptions apiDocletOptions);
+  List<BizCode> produce(ClassDoc classDoc,MethodDoc methodDoc,ApiDocletOptions apiDocletOptions);
 }
 
 

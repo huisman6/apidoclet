@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.dooioo.se.apidoclet.model.config.ApiDocJson;
 
@@ -68,7 +69,7 @@ public class RestService implements Serializable {
   /**
    * 此微服务的所有业务码
    */
-  private List<BizCode> bizCodes;
+  private Set<BizCode> bizCodes;
 
   /**
    * 微服务的所有枚举值
@@ -168,11 +169,11 @@ public class RestService implements Serializable {
     this.modelInfos = modelInfos;
   }
 
-  public List<BizCode> getBizCodes() {
+  public Set<BizCode> getBizCodes() {
     return bizCodes;
   }
 
-  public void setBizCodes(List<BizCode> bizCodes) {
+  public void setBizCodes(Set<BizCode> bizCodes) {
     this.bizCodes = bizCodes;
   }
 

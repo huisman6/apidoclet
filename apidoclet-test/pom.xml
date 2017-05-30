@@ -25,6 +25,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.dooioo.se.lorik</groupId>
+			<artifactId>lorik-spi-view</artifactId>
+			<version>2.1.6</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>

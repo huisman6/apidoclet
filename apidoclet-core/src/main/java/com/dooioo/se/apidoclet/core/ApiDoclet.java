@@ -20,22 +20,24 @@ import java.util.Set;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.dooioo.se.apidoclet.core.handler.DefaultTypeInfoProvider;
-import com.dooioo.se.apidoclet.core.handler.EnumProvider;
-import com.dooioo.se.apidoclet.core.handler.RestClassProvider;
+import com.dooioo.se.apidoclet.core.provider.DefaultTypeInfoProvider;
+import com.dooioo.se.apidoclet.core.provider.EnumProvider;
+import com.dooioo.se.apidoclet.core.provider.RestClassProvider;
 import com.dooioo.se.apidoclet.core.spi.exporter.RestServicesExporter;
 import com.dooioo.se.apidoclet.core.spi.exporter.RestServicesPartitionStrategy;
 import com.dooioo.se.apidoclet.core.spi.filter.RestClassMethodFilter;
+import com.dooioo.se.apidoclet.core.spi.filter.RestClassMethodParamFilter;
 import com.dooioo.se.apidoclet.core.spi.filter.RestServiceFilter;
-import com.dooioo.se.apidoclet.core.spi.filter.SkippedTypeFilter;
-import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodHeaderParamResolver;
-import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodPathParamResolver;
-import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodQueryParamResolver;
-import com.dooioo.se.apidoclet.core.spi.param.TypeInfoResolver;
-import com.dooioo.se.apidoclet.core.spi.processor.ApiDocProcessContext;
-import com.dooioo.se.apidoclet.core.spi.processor.RestClassMethodPostProcessor;
-import com.dooioo.se.apidoclet.core.spi.processor.RestClassPostProcessor;
-import com.dooioo.se.apidoclet.core.spi.processor.RestServicePostProcessor;
+import com.dooioo.se.apidoclet.core.spi.filter.TypeFilter;
+import com.dooioo.se.apidoclet.core.spi.http.HeaderParamResolver;
+import com.dooioo.se.apidoclet.core.spi.http.HttpRequestBodyResolver;
+import com.dooioo.se.apidoclet.core.spi.http.PathParamResolver;
+import com.dooioo.se.apidoclet.core.spi.http.QueryParamResolver;
+import com.dooioo.se.apidoclet.core.spi.http.TypeInfoResolver;
+import com.dooioo.se.apidoclet.core.spi.processor.ProcessorContext;
+import com.dooioo.se.apidoclet.core.spi.processor.post.RestClassMethodPostProcessor;
+import com.dooioo.se.apidoclet.core.spi.processor.post.RestClassPostProcessor;
+import com.dooioo.se.apidoclet.core.spi.processor.post.RestServicePostProcessor;
 import com.dooioo.se.apidoclet.core.spi.provider.BizCodeProvider;
 import com.dooioo.se.apidoclet.core.spi.provider.EndpointMappingProvider;
 import com.dooioo.se.apidoclet.core.spi.provider.ModelProvider;
@@ -55,6 +57,7 @@ import com.dooioo.se.apidoclet.model.MethodParameter;
 import com.dooioo.se.apidoclet.model.ModelInfo;
 import com.dooioo.se.apidoclet.model.PathParam;
 import com.dooioo.se.apidoclet.model.QueryParam;
+import com.dooioo.se.apidoclet.model.RequestBody;
 import com.dooioo.se.apidoclet.model.RestClass;
 import com.dooioo.se.apidoclet.model.RestService;
 import com.dooioo.se.apidoclet.model.RestServices;
@@ -91,9 +94,14 @@ class ApiDoclet {
   private List<ModelProvider> modelProviders;
 
   /**
-   * 哪些方法是rest接口
+   * 方法过滤
    */
   private List<RestClassMethodFilter> restMethodFilters;
+  /**
+   * 方法参数的过滤
+   */
+  private List<RestClassMethodParamFilter> restClassMethodParamFilters;
+
 
   /**
    * 解析业务码
@@ -106,23 +114,27 @@ class ApiDoclet {
   private List<TypeInfoProvider> typeInfoProviders;
 
   /**
-   * 忽略哪些类型
+   * 类型过滤
    */
-  private List<SkippedTypeFilter> skippedTypeFilters;
+  private List<TypeFilter> typeFilters;
 
   /**
    * 方法参数的解析
    */
-  private List<RestClassMethodQueryParamResolver> queryParamResolvers;
+  private List<QueryParamResolver> queryParamResolvers;
   /**
    * 方法参数的解析
    */
-  private List<RestClassMethodPathParamResolver> pathParamResolvers;
+  private List<PathParamResolver> pathParamResolvers;
 
   /**
+   * http request body parser
+   */
+  private List<HttpRequestBodyResolver> requestBodyResolvers;
+  /**
    * 方法参数的解析
    */
-  private List<RestClassMethodHeaderParamResolver> headerParamResolvers;
+  private List<HeaderParamResolver> headerParamResolvers;
 
 
   /**
@@ -173,11 +185,12 @@ class ApiDoclet {
       List<ModelProvider> modelProviders,
       List<RestClassMethodFilter> restMethodFilters,
       List<BizCodeProvider> bizCodeProviders,
-      List<TypeInfoProvider> typeInfoProviders,
-      List<SkippedTypeFilter> skippedTypeFilters,
-      List<RestClassMethodQueryParamResolver> queryParamResolvers,
-      List<RestClassMethodPathParamResolver> pathParamResolvers,
-      List<RestClassMethodHeaderParamResolver> headerParamResolvers,
+      List<TypeInfoProvider> typeInfoProviders, List<TypeFilter> typeFilters,
+      List<RestClassMethodParamFilter> restClassMethodParamFilters,
+      List<HttpRequestBodyResolver> requestBodyResolvers,
+      List<QueryParamResolver> queryParamResolvers,
+      List<PathParamResolver> pathParamResolvers,
+      List<HeaderParamResolver> headerParamResolvers,
       List<EndpointMappingProvider> endpointMappingProviders,
       List<RestServicesExporter> restServicesExporters,
       List<RestClassMethodPostProcessor> restClassMethodPostProcessors,
@@ -190,15 +203,16 @@ class ApiDoclet {
     this.modelProviders = modelProviders;
     this.restMethodFilters = restMethodFilters;
     this.bizCodeProviders = bizCodeProviders;
-    this.typeInfoProviders = new ArrayList<>();
+    this.typeInfoProviders = new ArrayList<TypeInfoProvider>();
     if (typeInfoProviders != null) {
       // 按顺序添加，外部提供的可能不是ArrayList,我们转换为顺序访问的
       this.typeInfoProviders.addAll(typeInfoProviders);
     }
     // 添加默认类型提供者，优先级最低
     this.typeInfoProviders.add(new DefaultTypeInfoProvider());
-
-    this.skippedTypeFilters = skippedTypeFilters;
+    this.typeFilters = typeFilters;
+    this.restClassMethodParamFilters = restClassMethodParamFilters;
+    this.requestBodyResolvers = requestBodyResolvers;
     this.pathParamResolvers = pathParamResolvers;
     this.headerParamResolvers = headerParamResolvers;
     this.queryParamResolvers = queryParamResolvers;
@@ -402,12 +416,13 @@ class ApiDoclet {
    * 
    * @author huisman
    */
-  private List<BizCode> resolveMethodBizCodes(MethodDoc methodDoc) {
-    List<BizCode> bizCodes = new ArrayList<BizCode>();
+  private Set<BizCode> resolveMethodBizCodes(ClassDoc classDoc,
+      MethodDoc methodDoc) {
+    Set<BizCode> bizCodes = new HashSet<BizCode>();
     if (this.bizCodeProviders != null && !this.bizCodeProviders.isEmpty()) {
       for (BizCodeProvider provider : bizCodeProviders) {
         List<BizCode> providedBizCodes =
-            provider.produce(methodDoc, this.options);
+            provider.produce(classDoc, methodDoc, this.options);
         if (providedBizCodes != null && !providedBizCodes.isEmpty()) {
           bizCodes.addAll(providedBizCodes);
         }
@@ -444,10 +459,10 @@ class ApiDoclet {
    * @author huisman
    */
   private boolean shouldSkipType(String qualifiedTypeName) {
-    if (this.skippedTypeFilters == null || this.skippedTypeFilters.isEmpty()) {
+    if (this.typeFilters == null || this.typeFilters.isEmpty()) {
       return false;
     }
-    for (SkippedTypeFilter filter : skippedTypeFilters) {
+    for (TypeFilter filter : typeFilters) {
       if (filter.ignored(qualifiedTypeName, this.options)) {
         options.getDocReporter().printNotice(
             "ignored type:" + qualifiedTypeName);
@@ -464,7 +479,7 @@ class ApiDoclet {
    */
   private QueryParam resolveQueryParam(Parameter parameter, String paramComment) {
     if (this.queryParamResolvers != null && !this.queryParamResolvers.isEmpty()) {
-      for (RestClassMethodQueryParamResolver resolver : this.queryParamResolvers) {
+      for (QueryParamResolver resolver : this.queryParamResolvers) {
         if (resolver.support(parameter, this.options)) {
           QueryParam qp = resolver.resolve(new TypeInfoResolver() {
 
@@ -483,6 +498,55 @@ class ApiDoclet {
     return null;
   }
 
+
+  /**
+   * 是否可以跳过此方法参数
+   * 
+   * @author huisman
+   */
+  private boolean shouldSkipParameter(Parameter parameter) {
+    if (this.restClassMethodParamFilters == null
+        || this.restClassMethodParamFilters.isEmpty()) {
+      return false;
+    }
+    for (RestClassMethodParamFilter filter : this.restClassMethodParamFilters) {
+      if (filter.shouldSkipped(parameter, this.options)) {
+        options.getDocReporter().printNotice(
+            "ignored parameter:" + parameter.name());
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 处理方法的RequestBody参数
+   * 
+   * @author huisman
+   */
+  private RequestBody resolveRequestBody(Parameter parameter,
+      String paramComment) {
+    if (this.requestBodyResolvers != null
+        && !this.requestBodyResolvers.isEmpty()) {
+      for (HttpRequestBodyResolver resolver : this.requestBodyResolvers) {
+        if (resolver.support(parameter, this.options)) {
+          RequestBody rb = resolver.resolve(new TypeInfoResolver() {
+
+            @Override
+            public TypeInfo resolve(Type type) {
+              return ApiDoclet.this.resolveTypeInfo(type);
+            }
+          }, parameter, paramComment, this.options);
+          if (rb == null) {
+            continue;
+          }
+          return rb;
+        }
+      }
+    }
+    return null;
+  }
+
   /**
    * 处理方法的PathParam参数
    * 
@@ -490,7 +554,7 @@ class ApiDoclet {
    */
   private PathParam resolvePathParam(Parameter parameter, String paramComment) {
     if (this.pathParamResolvers != null && !this.pathParamResolvers.isEmpty()) {
-      for (RestClassMethodPathParamResolver resolver : this.pathParamResolvers) {
+      for (PathParamResolver resolver : this.pathParamResolvers) {
         if (resolver.support(parameter, this.options)) {
           PathParam qp = resolver.resolve(new TypeInfoResolver() {
 
@@ -519,7 +583,7 @@ class ApiDoclet {
       String paramComment) {
     if (this.headerParamResolvers != null
         && !this.headerParamResolvers.isEmpty()) {
-      for (RestClassMethodHeaderParamResolver resolver : this.headerParamResolvers) {
+      for (HeaderParamResolver resolver : this.headerParamResolvers) {
         if (resolver.support(parameter, this.options)) {
           HeaderParam qp = resolver.resolve(new TypeInfoResolver() {
 
@@ -555,7 +619,7 @@ class ApiDoclet {
     // 所有model(pojo)
     Map<String, ModelInfo> spiModelMap = new HashMap<>();
     // 业务码值和BizCode的映射
-    Map<Integer, BizCode> spiBizCodeMap = new HashMap<>();
+    Map<String, BizCode> spiBizCodeMap = new HashMap<String, BizCode>();
 
     for (ClassDoc classDoc : classDocs) {
       if (shouldSkipType(classDoc.qualifiedTypeName())) {
@@ -604,9 +668,8 @@ class ApiDoclet {
       RestService restApp = restAppMap.get(appName);
       restApp.setApiDocJson(apiDocJson);
       // 后续处理
-      ApiDocProcessContext context =
-          new ApiDocProcessContext.Default(spiModelMap, spiBizCodeMap,
-              this.options);
+      ProcessorContext context =
+          new ProcessorContext.Default(spiModelMap, spiBizCodeMap, this.options);
       // 等所有model解析了之后，最后解析一次返回值的字段是泛型model的、业务码
       postProcessSpiClass(restApp, context);
       // 处理附加信息，比如构建时间，maven构件信息
@@ -617,7 +680,7 @@ class ApiDoclet {
       if (emptyOrOnlyOne) {
         // 如果只有一个rest app，model/bizcode全给它
         restApp.setModelInfos(restApps.getModelInfos());
-        restApp.setBizCodes(restApps.getBizCodes());
+        restApp.setBizCodes(new HashSet<>(restApps.getBizCodes()));
         restApp.setEnumInfos(restApps.getEnumInfos());
       } else {
         // 划分业务码以及model stat
@@ -631,7 +694,6 @@ class ApiDoclet {
       options.getDocReporter().printNotice("\n");
       options.getDocReporter().printNotice(
           "finally resolved ============================== as follow json ");
-      options.getDocReporter().printNotice("\n");
       options.getDocReporter().printNotice(JSON.toJSONString(restApps));
       options.getDocReporter().printNotice("\n");
     }
@@ -683,12 +745,11 @@ class ApiDoclet {
     }
     List<BizCode> currentAppBizCodes = new ArrayList<>();
     for (BizCode bizCode : spiBizCodes) {
-      if (this
-          .belongToCurrentRestService(restApp, bizCode.getContainingClass())) {
+      if (this.belongToCurrentRestService(restApp, bizCode.getDeclaredClass())) {
         currentAppBizCodes.add(bizCode);
       }
     }
-    restApp.setBizCodes(currentAppBizCodes);
+    restApp.setBizCodes(new HashSet<BizCode>(currentAppBizCodes));
   }
 
   /**
@@ -783,7 +844,7 @@ class ApiDoclet {
    * 设置rest app构建信息
    */
   private void postProcessRestService(RestService restApp,
-      ApiDocProcessContext context) {
+      ProcessorContext context) {
     // 客户端实现
     if (this.restServicePostProcessors != null
         && !this.restServicePostProcessors.isEmpty()) {
@@ -804,7 +865,7 @@ class ApiDoclet {
    * 
    * @author huisman
    */
-  private void postProcessSpiClass(RestService app, ApiDocProcessContext context) {
+  private void postProcessSpiClass(RestService app, ProcessorContext context) {
     List<RestClass> spiClasses = app.getRestClasses();
     if (spiClasses != null && !spiClasses.isEmpty()) {
       for (RestClass spiClass : spiClasses) {
@@ -817,7 +878,7 @@ class ApiDoclet {
   }
 
   private void postProccessRestClass(RestService restService,
-      RestClass restClass, ApiDocProcessContext context) {
+      RestClass restClass, ProcessorContext context) {
     if (this.restClassPostProcessors != null
         && !this.restClassPostProcessors.isEmpty()) {
       for (RestClassPostProcessor processor : restClassPostProcessors) {
@@ -831,7 +892,7 @@ class ApiDoclet {
    * 对SpiMethod做后续处理
    */
   private void postProcessSpiMethod(RestClass spiClass,
-      ApiDocProcessContext context) {
+      ProcessorContext context) {
     List<RestClass.Method> methods = spiClass.getMethods();
     if (methods != null && !methods.isEmpty()) {
       for (RestClass.Method method : methods) {
@@ -968,12 +1029,12 @@ class ApiDoclet {
       app.addSpiClass(spiClass);
 
       // 解析所有方法
-      process(classDoc, options, spiClass);
+      processMethods(classDoc, options, spiClass);
 
       ClassDoc[] interfaces = classDoc.interfaces();
       if (interfaces != null && interfaces.length > 0) {
         for (ClassDoc superInterface : interfaces) {
-          process(superInterface, options, spiClass);
+          processMethods(superInterface, options, spiClass);
         }
       }
       resolvedRestServiceMap.put(app.getApp(), app);
@@ -982,7 +1043,7 @@ class ApiDoclet {
     /**
      * 解析提供Rest服务的方法。
      */
-    private void process(ClassDoc classDoc, ApiDocletOptions options,
+    private void processMethods(ClassDoc classDoc, ApiDocletOptions options,
         RestClass restClass) {
       options.getDocReporter().printNotice(
           "processing methods in class: " + classDoc.qualifiedName());
@@ -994,15 +1055,11 @@ class ApiDoclet {
       }
       for (MethodDoc methodDoc : methods) {
         if (ApiDoclet.this.acceptThisMethod(methodDoc)) {
-          // 初始化方法，初始化注解、javadoc注释等
-          RestClass.Method method = initRestClassMethod(methodDoc);
-          // 方法的返回值
-          TypeInfo typeInfo =
-              ApiDoclet.this.resolveTypeInfo(methodDoc.returnType());
-          method.setReturnType(typeInfo);
-
+          // 初始化方法，初始化注解、javadoc注释、returnTpe等
+          RestClass.Method method = processRestClassMethod(classDoc, methodDoc);
           // 解析方法上可能有的业务码
-          method.setBizCodes(ApiDoclet.this.resolveMethodBizCodes(methodDoc));
+          method.setBizCodes(ApiDoclet.this.resolveMethodBizCodes(classDoc,
+              methodDoc));
 
           // 添加进RestClass里
           restClass.addMethod(method);
@@ -1018,19 +1075,20 @@ class ApiDoclet {
     /**
      * 初始化Method,设置方法名，方法所在的类，方法的唯一标识identity</br> 解析EndpointMapping信息以及JavaDoc Tag、Java注解。
      */
-    private RestClass.Method initRestClassMethod(MethodDoc methodDoc) {
-      RestClass.Method spiMethod = new RestClass.Method();
+    private RestClass.Method processRestClassMethod(ClassDoc classDoc,
+        MethodDoc methodDoc) {
+      RestClass.Method restMethod = new RestClass.Method();
       // 设置元数据信息
       String declaringClassName =
           methodDoc.containingClass().qualifiedTypeName();
-      spiMethod.setDeclaringClass(declaringClassName);
-      spiMethod.setMethodName(methodDoc.name());
+      restMethod.setDeclaringClass(declaringClassName);
+      restMethod.setMethodName(methodDoc.name());
 
       // 方法标识：类名#方法名#返回类型，例如: com.xxx.xxx.ICityService#findById(int,string)
       StringBuilder identityStr =
           new StringBuilder(declaringClassName
               + RestClass.Method.IDENTITY_SPILIT_CHAR
-              + spiMethod.getMethodName() + "(");
+              + restMethod.getMethodName() + "(");
 
       // 生成方法唯一ID
       Parameter[] parameters = methodDoc.parameters();
@@ -1041,19 +1099,21 @@ class ApiDoclet {
         identityStr.deleteCharAt(identityStr.length() - 1);
       }
       identityStr.append(")");
-      spiMethod.setIdentity(identityStr.toString());
+      restMethod.setIdentity(identityStr.toString());
 
-      // 解析方法上的mapping信息
-      spiMethod.setMapping(ApiDoclet.this.resolveEndpointMapping(
+      // parse endpoint path info
+      restMethod.setMapping(ApiDoclet.this.resolveEndpointMapping(
           methodDoc.annotations(), methodDoc.position()));
 
-      // 解析方法上的javadoc tag和注解
-      processMethodDocTag(methodDoc, spiMethod, options);
+      // parse java doc tags and annotations
+      processMethodDocTagsAndAnnotations(methodDoc, restMethod, options);
 
-      // 参数解析
-      processMethodParameter(methodDoc, spiMethod, options);
+      // parse method parameters
+      processMethodParameter(methodDoc, restMethod, options);
 
-      return spiMethod;
+      // method return type
+      processMethodReturnType(classDoc, methodDoc, restMethod, options);
+      return restMethod;
     }
 
     private void processMethodParameter(MethodDoc methodDoc,
@@ -1074,13 +1134,16 @@ class ApiDoclet {
       List<PathParam> pathParams = new ArrayList<PathParam>();
       List<QueryParam> queryParams = new ArrayList<QueryParam>();
       List<HeaderParam> requestHeaders = new ArrayList<HeaderParam>();
-
       // 方法原始参数
       List<MethodParameter> methodParameters = new ArrayList<>();
       Parameter[] parameters = methodDoc.parameters();
       int len = parameters.length;
       for (int i = 0; i < len; i++) {
         Parameter parameter = parameters[i];
+        // 是否跳过参数
+        if (ApiDoclet.this.shouldSkipParameter(parameter)) {
+          continue;
+        }
         // 是否跳过此类型
         if (ApiDoclet.this.shouldSkipType(parameter.type().qualifiedTypeName())) {
           continue;
@@ -1096,6 +1159,7 @@ class ApiDoclet {
         QueryParam qp = null;
         PathParam pp = null;
         HeaderParam hp = null;
+        RequestBody requestBody = null;
         if ((qp = ApiDoclet.this.resolveQueryParam(parameter, comment)) != null) {
           // 可变参数
           if (i == (len - 1) && methodDoc.isVarArgs() && qp.getType() != null) {
@@ -1106,6 +1170,10 @@ class ApiDoclet {
           pathParams.add(pp);
         } else if ((hp = ApiDoclet.this.resolveHeaderParam(parameter, comment)) != null) {
           requestHeaders.add(hp);
+        } else if ((requestBody =
+            ApiDoclet.this.resolveRequestBody(parameter, comment)) != null) {
+          // only one request body
+          method.setRequestBody(requestBody);
         }
         // may be more feature..
       }
@@ -1145,7 +1213,7 @@ class ApiDoclet {
       }
       // 参数类型
       Type type = parameter.type();
-      //解析方法类型
+      // 解析方法类型
       methodParameter.setTypeInfo(ApiDoclet.this.resolveTypeInfo(type));
 
       // 解析参数注解
@@ -1165,8 +1233,45 @@ class ApiDoclet {
       return methodParameter;
     }
 
-    private void processMethodDocTag(MethodDoc methodDoc,
-        RestClass.Method spiMethod, ApiDocletOptions options) {
+    private void processMethodReturnType(ClassDoc classDoc,
+        MethodDoc methodDoc, RestClass.Method restMethod,
+        ApiDocletOptions options) {
+      // customize return type
+      Tag[] returnTypeTags = methodDoc.tags(StandardDocTag.TAG_RETURN_TYPE);
+      if (returnTypeTags != null && returnTypeTags.length > 0) {
+        Tag firstReturnTypeTag = returnTypeTags[0];
+        // @returnType User
+        // @returnType org.apidoclet.test.User
+        // @returnType {@linkplain User}
+        // @returnType {@link User}
+        // @returnType {@code User}
+        Tag[] inlineTags = firstReturnTypeTag.inlineTags();
+        if (inlineTags != null) {
+          for (Tag tag : inlineTags) {
+            if (!StringUtils.isNullOrEmpty(tag.text())) {
+              ClassDoc candidateReturnType =
+                  classDoc.findClass(tag.text().trim());
+              if (candidateReturnType != null
+                  && candidateReturnType instanceof Type) {
+                // match
+                TypeInfo typeInfo =
+                    ApiDoclet.this.resolveTypeInfo((Type) candidateReturnType);
+                if (typeInfo != null) {
+                  restMethod.setReturnType(typeInfo);
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
+      // default return type
+      restMethod.setReturnType(ApiDoclet.this.resolveTypeInfo(methodDoc
+          .returnType()));
+    }
+
+    private void processMethodDocTagsAndAnnotations(MethodDoc methodDoc,
+        RestClass.Method restMethod, ApiDocletOptions options) {
       // 版本号
       Tag[] versionTags = methodDoc.tags(StandardDocTag.TAG_VERSION);
       String version =
@@ -1177,7 +1282,7 @@ class ApiDoclet {
       if (StringUtils.isNullOrEmpty(version)) {
         version = options.getVersion();
       }
-      spiMethod.setVersion(version);
+      restMethod.setVersion(version);
       // 作者
       Tag[] authorTags = methodDoc.tags(StandardDocTag.TAG_AUTHOR);
       StringBuilder authors = new StringBuilder();
@@ -1187,16 +1292,16 @@ class ApiDoclet {
         }
         authors.deleteCharAt(0);
       }
-      spiMethod.setAuthor(authors.toString());
+      restMethod.setAuthor(authors.toString());
 
       // since,如果不存在，则new Date()
       Tag[] sinceTags = methodDoc.tags(StandardDocTag.TAG_SINCE);
       String since =
           ((sinceTags == null || sinceTags.length == 0 || StringUtils
               .isNullOrEmpty(sinceTags[0].text())) ? new SimpleDateFormat(
-              "yyyy年M月d日").format(new Date()) : StringUtils.trim(sinceTags[0]
+              "yyyy-MM-dd").format(new Date()) : StringUtils.trim(sinceTags[0]
               .text()));
-      spiMethod.setSince(since);
+      restMethod.setSince(since);
 
       boolean deprecated =
           AnnotationUtils.isPresent(methodDoc.annotations(),
@@ -1204,11 +1309,11 @@ class ApiDoclet {
       Tag[] deprecatedTags = methodDoc.tags(StandardDocTag.TAG_DEPREACTED);
       if (deprecatedTags != null && deprecatedTags.length > 0) {
         deprecated = true;
-        spiMethod.setDeprecatedComment(StringUtils.trim(deprecatedTags[0]
+        restMethod.setDeprecatedComment(StringUtils.trim(deprecatedTags[0]
             .text()));
       }
       if (deprecated) {
-        spiMethod.setDeprecatedDate(new Date());
+        restMethod.setDeprecatedDate(new Date());
       }
 
       // 方法功能简介，默认是方法名
@@ -1217,11 +1322,11 @@ class ApiDoclet {
           ((summaryTags == null || summaryTags.length == 0 || StringUtils
               .isNullOrEmpty(summaryTags[0].text())) ? methodDoc.name()
               : StringUtils.trim(summaryTags[0].text()));
-      spiMethod.setSummary(summary);
+      restMethod.setSummary(summary);
 
       String comment = methodDoc.commentText();
       // 设置方法说明
-      spiMethod.setDescription(StringUtils.trim(comment));
+      restMethod.setDescription(StringUtils.trim(comment));
       // 解析类上的其他注释
       Tag[] allTags = methodDoc.tags();
 
@@ -1230,7 +1335,8 @@ class ApiDoclet {
           new HashSet<>(Arrays.asList('@' + StandardDocTag.TAG_VERSION,
               '@' + StandardDocTag.TAG_AUTHOR,
               '@' + StandardDocTag.TAG_DEPREACTED,
-              '@' + StandardDocTag.TAG_SINCE, '@' + StandardDocTag.TAG_SUMMARY));
+              '@' + StandardDocTag.TAG_SINCE, '@' + StandardDocTag.TAG_SUMMARY,
+              '@' + StandardDocTag.TAG_RETURN_TYPE));
       JavaDocTags docTags = new JavaDocTags();
       if (allTags != null && allTags.length > 0) {
         for (Tag tag : allTags) {
@@ -1240,7 +1346,7 @@ class ApiDoclet {
           docTags.add(new JavaDocTag(tag.kind(), tag.name(), tag.text()));
         }
       }
-      spiMethod.setAdditionalDocTags(docTags);
+      restMethod.setAdditionalDocTags(docTags);
 
       // 解析方法上的注解
       AnnotationDesc[] annotationDescs = methodDoc.annotations();
@@ -1254,7 +1360,7 @@ class ApiDoclet {
               .qualifiedTypeName());
           javaAnnotations.add(javaAnnotation);
         }
-        spiMethod.setMethodAnnotations(javaAnnotations);
+        restMethod.setMethodAnnotations(javaAnnotations);
       }
     }
   }

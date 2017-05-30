@@ -3,7 +3,8 @@ package com.dooioo.se.apidoclet.model;
 import java.io.Serializable;
 
 /**
- * 对应SpringMVC RequestMapping里的produces以及JAX-RS的@Produce.
+ * http response header "Content-Type",similar to SpringMVC {@code @RequestMapping#produces} or JAX-RS
+ * {@code @Produces}.
  */
 public class Produce implements Serializable {
   private static final long serialVersionUID = 1L;

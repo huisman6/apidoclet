@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import com.dooioo.se.apidoclet.model.util.StandardDocTag;
 
@@ -58,7 +59,7 @@ public class RestClass implements Serializable {
   /**
    * 该class里的所有Rest方法
    */
-  private List<Method> methods = new ArrayList<>();
+  private List<RestClass.Method> methods = new ArrayList<>();
 
   /**
    *类上可能有映射信息
@@ -253,6 +254,11 @@ public class RestClass implements Serializable {
      * http 请求参数
      */
     private List<HeaderParam> requestHeaders;
+    
+    /**
+     * http request entity
+     */
+    private RequestBody requestBody;
 
     /**
      * 接口被废弃的日期，，对应javadoc tag @deprecated ,如果没指定日期，则为首次生成该字段的日期
@@ -266,7 +272,7 @@ public class RestClass implements Serializable {
     /**
      * 方法可能抛出的业务码
      */
-    private List<BizCode> bizCodes;
+    private Set<BizCode> bizCodes;
 
     /**
      * 方法返回类型的抽象
@@ -288,6 +294,15 @@ public class RestClass implements Serializable {
     private JavaDocTags additionalDocTags;
     
     
+    
+    public RequestBody getRequestBody() {
+      return requestBody;
+    }
+
+    public void setRequestBody(RequestBody requestBody) {
+      this.requestBody = requestBody;
+    }
+
     public JavaDocTags getAdditionalDocTags() {
       return additionalDocTags;
     }
@@ -300,7 +315,7 @@ public class RestClass implements Serializable {
       return methodParameters;
     }
 
-    public List<BizCode> getBizCodes() {
+    public Set<BizCode> getBizCodes() {
       return bizCodes;
     }
 
@@ -319,7 +334,7 @@ public class RestClass implements Serializable {
       this.methodAnnotations = methodAnnotations;
     }
 
-    public void setBizCodes(List<BizCode> bizCodes) {
+    public void setBizCodes(Set<BizCode> bizCodes) {
       this.bizCodes = bizCodes;
     }
 

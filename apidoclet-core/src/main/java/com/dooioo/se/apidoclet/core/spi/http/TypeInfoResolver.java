@@ -1,4 +1,4 @@
-package com.dooioo.se.apidoclet.core.spi.param;
+package com.dooioo.se.apidoclet.core.spi.http;
 
 import com.dooioo.se.apidoclet.model.TypeInfo;
 import com.sun.javadoc.Type;

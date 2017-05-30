@@ -5,14 +5,16 @@ import java.util.List;
 import com.dooioo.se.apidoclet.core.spi.exporter.RestServicesExporter;
 import com.dooioo.se.apidoclet.core.spi.exporter.RestServicesPartitionStrategy;
 import com.dooioo.se.apidoclet.core.spi.filter.RestClassMethodFilter;
+import com.dooioo.se.apidoclet.core.spi.filter.RestClassMethodParamFilter;
 import com.dooioo.se.apidoclet.core.spi.filter.RestServiceFilter;
-import com.dooioo.se.apidoclet.core.spi.filter.SkippedTypeFilter;
-import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodHeaderParamResolver;
-import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodPathParamResolver;
-import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodQueryParamResolver;
-import com.dooioo.se.apidoclet.core.spi.processor.RestClassMethodPostProcessor;
-import com.dooioo.se.apidoclet.core.spi.processor.RestClassPostProcessor;
-import com.dooioo.se.apidoclet.core.spi.processor.RestServicePostProcessor;
+import com.dooioo.se.apidoclet.core.spi.filter.TypeFilter;
+import com.dooioo.se.apidoclet.core.spi.http.HeaderParamResolver;
+import com.dooioo.se.apidoclet.core.spi.http.HttpRequestBodyResolver;
+import com.dooioo.se.apidoclet.core.spi.http.PathParamResolver;
+import com.dooioo.se.apidoclet.core.spi.http.QueryParamResolver;
+import com.dooioo.se.apidoclet.core.spi.processor.post.RestClassMethodPostProcessor;
+import com.dooioo.se.apidoclet.core.spi.processor.post.RestClassPostProcessor;
+import com.dooioo.se.apidoclet.core.spi.processor.post.RestServicePostProcessor;
 import com.dooioo.se.apidoclet.core.spi.provider.BizCodeProvider;
 import com.dooioo.se.apidoclet.core.spi.provider.EndpointMappingProvider;
 import com.dooioo.se.apidoclet.core.spi.provider.ModelProvider;
@@ -56,7 +58,7 @@ final class ApiDocletBuilder {
   /**
    * 忽略哪些类型
    */
-  private List<SkippedTypeFilter> skippedTypeFilters;
+  private List<TypeFilter> typeFilters;
 
   /**
    * 路径映射信息
@@ -155,8 +157,8 @@ final class ApiDocletBuilder {
    * @author huisman
    */
   ApiDocletBuilder enableSkippedTypeFilters() {
-    this.skippedTypeFilters =
-        ServiceLoaderUtils.getServicesOrNull(SkippedTypeFilter.class);
+    this.typeFilters =
+        ServiceLoaderUtils.getServicesOrNull(TypeFilter.class);
     return this;
   }
 
@@ -221,13 +223,15 @@ final class ApiDocletBuilder {
   ApiDoclet build() {
     return new ApiDoclet(this.options, this.restServiceFilters,
         this.modelProviders, this.restMethodFilters, this.bizCodeProviders,
-        this.typeInfoProviders, this.skippedTypeFilters,
+        this.typeInfoProviders, this.typeFilters,
+        ServiceLoaderUtils.getServicesOrNull(RestClassMethodParamFilter.class),
+        ServiceLoaderUtils.getServicesOrNull(HttpRequestBodyResolver.class),
         ServiceLoaderUtils
-            .getServicesOrNull(RestClassMethodQueryParamResolver.class),
+            .getServicesOrNull(QueryParamResolver.class),
         ServiceLoaderUtils
-            .getServicesOrNull(RestClassMethodPathParamResolver.class),
+            .getServicesOrNull(PathParamResolver.class),
         ServiceLoaderUtils
-            .getServicesOrNull(RestClassMethodHeaderParamResolver.class),
+            .getServicesOrNull(HeaderParamResolver.class),
         this.endpointMappingProviders, this.restServicesExporters,
         this.restClassMethodPostProcessors, this.restClassPostProcessors,
         this.restServicePostProcessors,

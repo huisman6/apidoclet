@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 所有的类或方法上的注解，不限{@link RetentionPolicy}
+ * all java annotations on class or method level,regardless of {@link RetentionPolicy}  
  */
 public class JavaAnnotations implements Serializable {
   private static final long serialVersionUID = 1L;

@@ -5,12 +5,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.dooioo.se.apidoclet.core.ApiDocletOptions;
-import com.dooioo.se.apidoclet.core.spi.filter.SkippedTypeFilter;
+import com.dooioo.se.apidoclet.core.spi.filter.TypeFilter;
 
 /**
  * 忽略Rest接口中的一些参数,比如 HttpServletRequest
  */
-public class ServletWebSkippedTypeFilter implements SkippedTypeFilter {
+public class ServletWebSkippedTypeFilter implements TypeFilter {
   private Set<String> ignoredTypes = new HashSet<>(Arrays.asList(
       "java.io.InputStream", "InputStream", "java.io.OutputStream",
       "OutputStream", "java.io.PrintWriter", "PrintWriter",

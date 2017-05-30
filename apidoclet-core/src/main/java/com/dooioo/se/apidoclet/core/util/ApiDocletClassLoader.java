@@ -2,9 +2,9 @@ package com.dooioo.se.apidoclet.core.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Arrays;
 
 /**
@@ -75,7 +75,6 @@ public class ApiDocletClassLoader extends ClassLoader {
 
   private byte[] loadBytesForClass(String name) throws ClassNotFoundException {
     try (InputStream is = loadClassFile(name);) {
-
       if (is == null) {
         return null;
       }
@@ -113,14 +112,16 @@ public class ApiDocletClassLoader extends ClassLoader {
       if (StringUtils.isNullOrEmpty(classpath)) {
         continue;
       }
-      String path =
-          classpath + File.pathSeparator
-              + name.replace('.', File.pathSeparatorChar) + ".class";
-      URL url = this.getClass().getResource(path);
-      if (url == null) {
-        continue;
+      if (!classpath.endsWith(File.separator)) {
+        classpath = classpath + File.separatorChar;
       }
-      return url.openStream();
+      //absolute class file path
+      String path =
+          classpath + name.replace('.', File.separatorChar) + ".class";
+      File file = new File(path);
+      if (file.exists() && file.isFile()) {
+        return new FileInputStream(path);
+      }
     }
     return null;
   }

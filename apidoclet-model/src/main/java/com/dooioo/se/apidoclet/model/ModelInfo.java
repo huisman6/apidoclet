@@ -6,22 +6,23 @@ import java.util.List;
 import com.dooioo.se.apidoclet.model.util.Types;
 
 /**
- * rest响应的model
  * 
+ * conventional java bean - Model（-View-Controller)</br>
+ * mostly,it's the return type of Rest Endpoint
  * @author huisman
  */
 public class ModelInfo implements Serializable {
   private static final long serialVersionUID = 1L;
   /**
-   * model类的名称
+   * full qualified java bean class name, see {@link Class#getName()}
    */
   private String className;
   /**
-   * model类的简单名称
+   * simple class name , see {@link Class#getSimpleName()}
    */
   private String simpleClassName;
   /**
-   * model里的字段
+   * fields that have public getter
    */
   private List<FieldInfo> fields;
 

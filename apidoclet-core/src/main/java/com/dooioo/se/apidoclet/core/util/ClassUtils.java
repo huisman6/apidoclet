@@ -27,18 +27,21 @@ import com.sun.javadoc.WildcardType;
  */
 public final class ClassUtils {
   /**
-   * GETTER的前缀
+   * GETTER prefix
    */
   private static final String GETTER_PREFIX = "get";
   private static final int GETTER_PREFIX_LEN = GETTER_PREFIX.length();
   /**
-   * Boolean值
+   * boolean field's getter method prefix
    */
   private static final String IS_PREFIX = "is";
+  /**
+   * length of IS_PREFIX
+   */
   private static final int IS_PREFIX_LEN = IS_PREFIX.length();
 
   /**
-   * 类型信息，可能为null
+   *  additional java field comment providers ,may be null
    */
   private static List<JavaDocCommentProvider> commentProviders =
       ServiceLoaderUtils.getServicesOrNull(JavaDocCommentProvider.class);

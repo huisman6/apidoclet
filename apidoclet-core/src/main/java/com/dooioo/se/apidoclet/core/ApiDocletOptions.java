@@ -18,53 +18,53 @@ import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.RootDoc;
 
 /**
- * API doclet的配置，除了标准参数外，其他的参数保存在othersOptions
+ * api doclet command-line options
  * 
  * @author huisman
  */
 public class ApiDocletOptions {
   /**
-   * 支持的命令行参数为key,value两个长度的选项
+   * options have key and value - length = 2
    */
-  private static final Set<String> SUPPORT_OPTIONS_LEN2 = new HashSet<>(
+  private static final Set<String> SUPPORT_OPTIONS_LEN2 = new HashSet<String>(
       Arrays.asList(ApiDocletOptions.CLASS_DIR, ApiDocletOptions.VERSION,
           ApiDocletOptions.ARTIFACT_ID, ApiDocletOptions.ARTIFACT_VERSION,
           ApiDocletOptions.ARTIFACT_GROUP_ID, ApiDocletOptions.APP_NAME,
           ApiDocletOptions.APP, ApiDocletOptions.EXPORT_TO));
 
   /**
-   * 仅支持key，长度为1的选项
+   * option length = 1 , only have one option key
    */
-  private static final Set<String> SUPPORT_OPTIONS_LEN1 = new HashSet<>(
+  private static final Set<String> SUPPORT_OPTIONS_LEN1 = new HashSet<String>(
       Arrays.asList(ApiDocletOptions.PRINT,
           ApiDocletOptions.IGNORE_VIRTUAL_PATH));
 
   /**
-   * 默认选项值里的分隔符
+   * the default value delimiter that use to split an option value
    */
-  public static final String DEFAULT_SPLIT_STR = ",";
+  public static final String DEFAULT_VALUE_DILIMETER = ",";
 
   /**
-   * 所有选项必须以-开头
+   * all option key prefix
    */
   public static final String DEFAULT_PREFIX = "-";
 
   /**
-   * 是否打印所有解析后的app信息
+   * indicates print the parsed doc to console
    */
   public static final String PRINT = DEFAULT_PREFIX + "print";
 
   /**
-   * classes文件目录
+   *  compiled class path, apidoclet classloader use it to load class
    */
   public static final String CLASS_DIR = DEFAULT_PREFIX + "classdir";
   /**
-   * 默认版本号
+   * default rest api version
    */
   public static final String VERSION = DEFAULT_PREFIX + "version";
 
   /**
-   * 工程根目录
+   * workspace or project root directory
    */
   public static final String PROJECT_ROOT_DIR = DEFAULT_PREFIX
       + "projectRootDir";
@@ -81,7 +81,7 @@ public class ApiDocletOptions {
   public static final String ARTIFACT_ID = DEFAULT_PREFIX + "artifactId";
 
   /**
-   * jar ARTIFACT_VERSION
+   * jar artifact version
    */
   public static final String ARTIFACT_VERSION = DEFAULT_PREFIX
       + "artifactVersion";
@@ -92,39 +92,46 @@ public class ApiDocletOptions {
   public static final String IGNORE_VIRTUAL_PATH = DEFAULT_PREFIX
       + "ignoreVirtualPath";
   /**
-   * 源文件路径，java doc标注参数
+   * source java file directory 
    */
   public static final String SOURCE_PATH = "-sourcepath";
   /**
-   * app名称 {@link RestService#getName()}
+   * could be spring.application.name or FeignClient#name, global service identifier 
+   * @see {@link RestService#getName()}
    */
   public static final String APP = DEFAULT_PREFIX + "app";
   /**
-   * 默认app 描述 {@link RestService#getAppName()}
+   * app's web-ui display name 
    */
   public static final String APP_NAME = DEFAULT_PREFIX + "appName";
   /**
-   * 导出url接口
+   * where should we export the parsed doc to
    */
   public static final String EXPORT_TO = DEFAULT_PREFIX + "exportTo";
 
   /**
-   * 不能修改
+   * non-standard apidoclet options
    */
-  private Map<String, String> othersOptions = null;
+  private Map<String, String> othersOptions =new HashMap<String, String>();
 
   /**
-   * api 文档的类加载器，根据classdir和classpath加载特定类
+   * apidoclet classloader , sometimes we need to invoke a class field( reflect)
    */
   private ClassLoader apidocletClassLoader = null;
   /**
-   * 源文件编译后classes所在目录，我们可能要从源文件中查找BizCode
+   * compiled classes output directory, apidoclet classloader use it to find class if necessary
    */
   private String classdir;
+  /**
+   * where should we export our parsed doc to
+   */
   private String exportTo;
+  /**
+   * service global identify 
+   */
   private String app;
   /**
-   * 应用程序名
+   * app's web-ui display name
    */
   private String appName;
   /**
@@ -132,24 +139,27 @@ public class ApiDocletOptions {
    */
   private boolean ignoreVirtualPath;
   /**
-   * 构建者的ip地址
+   * IP address
    */
   private String buildIpAddress;
   /**
-   * 被谁构建
+   * who build
    */
   private String buildBy;
 
   /**
-   * 是否打印解析后的数据
+   * output the parsed doc to console or not
    */
   private boolean print = false;
 
+  /**
+   * workspace or project root directory
+   */
   private String projectRootDir;
 
 
   /**
-   * 默认版本号，如果没有指定@version
+   * default method version when {@code @version} doc tag doesn't exists
    */
   private String version;
 
@@ -217,6 +227,11 @@ public class ApiDocletOptions {
   }
 
 
+
+  /* non-public */Map<String, String> getOthersOptions() {
+    return othersOptions;
+  }
+
   /**
    * 用于javadoc解析执行过程中打印错误信息
    */
@@ -232,13 +247,13 @@ public class ApiDocletOptions {
   public String getExportTo() {
     return exportTo;
   }
-  
-  
+
 
 
   /**
-    * API文档的类加载器，会从classdir以及classpath里搜索加载特定类
-    * @author huisman
+   * API文档的类加载器，会从classdir以及classpath里搜索加载特定类
+   * 
+   * @author huisman
    */
   public ClassLoader getApidocletClassLoader() {
     return apidocletClassLoader;
@@ -311,8 +326,9 @@ public class ApiDocletOptions {
    * @author huisman
    */
   public static ApiDocletOptions readFromCommandLine(RootDoc rootDoc) {
-    rootDoc.printNotice("命令行参数如下：");
-    // 程序启动参数
+    rootDoc.printNotice("available options：");
+    
+ // 程序启动参数
     String[][] options = rootDoc.options();
     ApiDocletOptions apiDocletOptions = new ApiDocletOptions();
     Map<String, String> otherOptions = new HashMap<>();
@@ -324,6 +340,9 @@ public class ApiDocletOptions {
       if (StringUtils.isNullOrEmpty(options[i][0])) {
         continue;
       }
+      
+      rootDoc.printNotice(Arrays.toString(options[i]));
+      
       if (input.length == 1) {
         otherOptions.put(options[i][0], null);
       } else {
@@ -359,29 +378,22 @@ public class ApiDocletOptions {
         default:
           break;
       }
-
-      apiDocletOptions.buildBy = (System.getProperty("user.name"));
-      String ipAddress = "unknown";
-      try {
-        ipAddress = InetAddress.getLocalHost().getHostAddress();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      apiDocletOptions.buildIpAddress =
-          (ipAddress + " " + System.getProperty("os.name"));
-
-      rootDoc.printNotice(Arrays.toString(options[i]));
     }
-
+    
     rootDoc.printNotice("\n");
+    apiDocletOptions.buildBy = (System.getProperty("user.name"));
+    String ipAddress = "unknown";
+    try {
+      ipAddress = InetAddress.getLocalHost().getHostAddress();
+    } catch (Exception e) {
+    }
+    apiDocletOptions.buildIpAddress =
+        (ipAddress + " " + System.getProperty("os.name"));
 
-    // 没有的话，取当前目录
+    // fall back to current directory
     if (StringUtils.isNullOrEmpty(apiDocletOptions.getClassdir())) {
       apiDocletOptions.classdir = (transformClassDir("."));
     }
-
-    rootDoc.printNotice(apiDocletOptions.toString());
-    rootDoc.printNotice("\n");
 
     apiDocletOptions.docReporter = (rootDoc);
     // 不可修改

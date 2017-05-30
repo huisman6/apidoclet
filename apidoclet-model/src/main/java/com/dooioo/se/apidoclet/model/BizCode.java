@@ -3,57 +3,56 @@ package com.dooioo.se.apidoclet.model;
 import java.io.Serializable;
 
 /**
- * 业务码的抽象，包含：code (业务码）和message（简要说明，一般响应给客户端），
- * comment(注释，详细说明，通常展示在文档中，帮助使用者理解此业务码的cotext信息）
+ * 业务码的抽象，包含：code (业务码）和message（简要说明，一般响应给客户端）， comment(注释，详细说明，通常展示在文档中，帮助使用者理解此业务码的cotext信息）
  * @author huisman
  */
 public class BizCode implements Serializable {
   private static final long serialVersionUID = 1L;
   /**
-   * 业务码
+   * biz code identification,MUST be global unique 
    */
-  private int code;
+  private String code;
   /**
-   * 业务码说明
+   * biz code description
    */
   private String message;
   /**
-   * BizCode注释
+   * biz code java comment
    */
   private String comment;
-  
+
   /**
-   * 业务可能的名称，描述信息，比如字段名。
+   * return the field name if the biz code  declares in  another class as a field
    */
   private String name;
-  
+
   /**
-   * 业务码可能归属的类名，可以为null
+   * full qualified type name of the class or interface that declares the biz code, may be null
    */
-  private String containingClass;
+  private String declaredClass;
 
   /**
    * @param code
    * @param message
    */
-  public BizCode(int code, String message) {
+  public BizCode(String code, String message) {
     super();
     this.code = code;
     this.message = message;
   }
 
-  public BizCode(int code, String message, String comment) {
+  public BizCode(String code, String message, String comment) {
     super();
     this.code = code;
     this.message = message;
     this.comment = comment;
   }
-  
+
   public BizCode() {
     super();
   }
-  
-  
+
+
 
   public String getName() {
     return name;
@@ -63,19 +62,19 @@ public class BizCode implements Serializable {
     this.name = name;
   }
 
-  public String getContainingClass() {
-    return containingClass;
+  public String getDeclaredClass() {
+    return declaredClass;
   }
 
-  public void setContainingClass(String containingClass) {
-    this.containingClass = containingClass;
+  public void setDeclaredClass(String declaredClass) {
+    this.declaredClass = declaredClass;
   }
 
-  public int getCode() {
+  public String getCode() {
     return code;
   }
 
-  public void setCode(int code) {
+  public void setCode(String code) {
     this.code = code;
   }
 
@@ -95,25 +94,28 @@ public class BizCode implements Serializable {
     this.message = message;
   }
 
-  
+
 
   @Override
   public String toString() {
     return "BizCode [code=" + code + ", message=" + message + ", comment="
-        + comment + ", name=" + name + ", containingClass=" + containingClass
-        + "]";
+        + comment + ", name=" + name + ", declaredClass=" + declaredClass + "]";
   }
+
+
 
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + code;
+    // only code matters
+    result = prime * result + ((code == null) ? 0 : code.hashCode());
     return result;
   }
 
   @Override
   public boolean equals(Object obj) {
+    // only code matters
     if (this == obj)
       return true;
     if (obj == null)
@@ -121,7 +123,10 @@ public class BizCode implements Serializable {
     if (getClass() != obj.getClass())
       return false;
     BizCode other = (BizCode) obj;
-    if (code != other.code)
+    if (code == null) {
+      if (other.code != null)
+        return false;
+    } else if (!code.equals(other.code))
       return false;
     return true;
   }

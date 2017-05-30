@@ -3,8 +3,8 @@ package com.dooioo.se.apidoclet.model;
 import java.io.Serializable;
 
 /**
- * 路径参数名，对应SpringMVC的@PathVariable或JAX-RS里的 @Path。
- * 通常用来描述URI里的PATH部分。
+ * http url path description,similar to SpringMVC {@code @PathVariable} 
+ *  or JAX-RS {@code @Path}
  * @author huisman
  */
 public class PathParam implements Serializable {

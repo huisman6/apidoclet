@@ -6,7 +6,7 @@ import java.util.Set;
 import com.dooioo.se.apidoclet.model.util.Types;
 
 /**
- * 类型扩展
+ * type expand
  */
 public interface TypesExtension {
   /**

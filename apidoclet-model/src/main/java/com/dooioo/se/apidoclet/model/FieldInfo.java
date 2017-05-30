@@ -4,36 +4,39 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 字段信息
+ * java bean field encapsulation，include field type、comment、field name、nested fields
  * @author huisman
  */
 public class FieldInfo implements Serializable {
   private static final long serialVersionUID = 1L;
   /**
-   * 字段注释，优先从getter获取，其次从字段注释获取
+   * field comment, search strategy:</p>
+   *  first search the standard java comment on the field ,
+   *  if not found, then deduce the comment from the conventional getter method
    */
   private String comment;
 
   /**
-   * 字段类型
+   * field type description
    */
   private TypeInfo type;
 
   /**
-   * 字段名称
+   * field name in the source code
    */
   private String name;
 
   /**
-   * 字段是那个类的
+   * which class contains current field ,it's a canonical(full qualified) type name
+   * eg:  {@code java.lang.String}
    */
   private String declaringClass;
 
   /**
-   * 如果该字段代表了一个model，那么该model的所有字段 <br/>
-   * 一般是返回值里才解析
+   * nested fields when current field type is a complex java bean model,
+   * only support two-depth nested
    */
-  private List<FieldInfo> modelFields;
+  private List<FieldInfo> nestedFields;
 
   public String getComment() {
     return comment;
@@ -68,18 +71,18 @@ public class FieldInfo implements Serializable {
   }
 
 
-  public List<FieldInfo> getModelFields() {
-    return modelFields;
+  public List<FieldInfo> getNestedFields() {
+    return nestedFields;
   }
 
-  public void setModelFields(List<FieldInfo> modelFields) {
-    this.modelFields = modelFields;
+  public void setNestedFields(List<FieldInfo> modelFields) {
+    this.nestedFields = modelFields;
   }
 
   @Override
   public String toString() {
     return "FieldInfo [comment=" + comment + ", type=" + type + ", name=" + name
-        + ", declaringClass=" + declaringClass + ", modelFields=" + modelFields + "]";
+        + ", declaringClass=" + declaringClass + ", modelFields=" + nestedFields + "]";
   }
 
 

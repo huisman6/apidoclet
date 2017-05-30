@@ -96,5 +96,6 @@
 		<module>apidoclet-maven-plugin</module>
 		<module>apidoclet-test</module>
 		<module>apidoclet-extension-lianjia-sh-se</module>
+		<module>apidoclet-server</module>
 	</modules>
 </project>

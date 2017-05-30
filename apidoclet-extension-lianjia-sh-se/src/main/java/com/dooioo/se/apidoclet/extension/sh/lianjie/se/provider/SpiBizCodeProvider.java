@@ -55,7 +55,7 @@ public class SpiBizCodeProvider implements BizCodeProvider {
   }
 
   @Override
-  public List<BizCode> produce(MethodDoc methodDoc,
+  public List<BizCode> produce(ClassDoc classDoc, MethodDoc methodDoc,
       ApiDocletOptions apiDocletOptions) {
     // 我们的方法上都是Lorik Rest codes，无法解析业务码，忽略
     return null;
@@ -80,13 +80,14 @@ public class SpiBizCodeProvider implements BizCodeProvider {
               options.getApidocletClassLoader());
       for (Field field : clazz.getDeclaredFields()) {
         if (!Modifier.isStatic(field.getModifiers())
-            && !Modifier.isPublic(field.getModifiers())
-            && !field
-                .getDeclaringClass()
-                .getName()
-                .equals(
-                    com.dooioo.se.lorik.spi.view.support.BizCode.class
-                        .getName())) {
+            && !Modifier.isPublic(field.getModifiers())) {
+          continue;
+        }
+        if (!field
+            .getType()
+            .getName()
+            .equals(
+                com.dooioo.se.lorik.spi.view.support.BizCode.class.getName())) {
           continue;
         }
         // 解析业务码，因为是静态、public常量，可直接获取
@@ -104,7 +105,7 @@ public class SpiBizCodeProvider implements BizCodeProvider {
 
     } catch (ClassNotFoundException | IllegalArgumentException
         | IllegalAccessException e) {
-      options.getDocReporter().printNotice(
+      options.getDocReporter().printWarning(
           "error occured when resolve bizcode,class:"
               + classDoc.qualifiedTypeName() + ",message:" + e.getMessage());
       return bizCodeFields;
@@ -122,14 +123,14 @@ public class SpiBizCodeProvider implements BizCodeProvider {
       // 我们文档中解析后的业务码
       BizCode code = new BizCode();
       code.setComment(fieldDoc.commentText());
-      code.setContainingClass(fieldDoc.containingClass().qualifiedName());
+      code.setDeclaredClass(fieldDoc.containingClass().qualifiedName());
       code.setName(fieldDoc.name());
 
       // 获取类里的业务码信息
       com.dooioo.se.lorik.spi.view.support.BizCode bizCode =
           bizCodeMap.get(fieldDoc.name());
       if (bizCode != null) {
-        code.setCode(bizCode.getCode());
+        code.setCode(String.valueOf(bizCode.getCode()));
         code.setMessage(bizCode.getMessage());
       }
       bizCodeFields.add(code);

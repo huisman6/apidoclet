@@ -3,7 +3,8 @@ package com.dooioo.se.apidoclet.model;
 import java.io.Serializable;
 
 /**
- * Http的查询参数，对应SpringMVC 的@RequestParam 或者JAX-RS里的@QueryParam
+ * * http query param,related to SpringMVC {@code @RequestParam} 
+ *  or JAX-RS {@code @QueryParam}
  * @author huisman
  */
 public class QueryParam implements Serializable {

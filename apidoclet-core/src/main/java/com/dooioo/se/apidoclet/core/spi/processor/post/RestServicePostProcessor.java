@@ -1,5 +1,6 @@
-package com.dooioo.se.apidoclet.core.spi.processor;
+package com.dooioo.se.apidoclet.core.spi.processor.post;
 
+import com.dooioo.se.apidoclet.core.spi.processor.ProcessorContext;
 import com.dooioo.se.apidoclet.model.RestService;
 
 /**
@@ -12,7 +13,7 @@ public interface RestServicePostProcessor {
     * @param restService
     * @param context
    */
-  void postProcess(RestService restService,ApiDocProcessContext context);
+  void postProcess(RestService restService,ProcessorContext context);
   
 }
 

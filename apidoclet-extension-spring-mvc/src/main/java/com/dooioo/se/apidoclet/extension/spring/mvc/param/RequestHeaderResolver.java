@@ -3,8 +3,8 @@ package com.dooioo.se.apidoclet.extension.spring.mvc.param;
 import java.util.Map;
 
 import com.dooioo.se.apidoclet.core.ApiDocletOptions;
-import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodHeaderParamResolver;
-import com.dooioo.se.apidoclet.core.spi.param.TypeInfoResolver;
+import com.dooioo.se.apidoclet.core.spi.http.HeaderParamResolver;
+import com.dooioo.se.apidoclet.core.spi.http.TypeInfoResolver;
 import com.dooioo.se.apidoclet.core.util.AnnotationUtils;
 import com.dooioo.se.apidoclet.core.util.StringUtils;
 import com.dooioo.se.apidoclet.model.HeaderParam;
@@ -16,7 +16,7 @@ import com.sun.javadoc.Parameter;
  * 解析http header
  */
 public class RequestHeaderResolver implements
-    RestClassMethodHeaderParamResolver {
+    HeaderParamResolver {
 
   @Override
   public boolean support(Parameter parameter, ApiDocletOptions options) {

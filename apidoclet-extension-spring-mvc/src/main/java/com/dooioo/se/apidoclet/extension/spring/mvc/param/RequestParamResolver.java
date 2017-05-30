@@ -5,8 +5,8 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.dooioo.se.apidoclet.core.ApiDocletOptions;
-import com.dooioo.se.apidoclet.core.spi.param.RestClassMethodQueryParamResolver;
-import com.dooioo.se.apidoclet.core.spi.param.TypeInfoResolver;
+import com.dooioo.se.apidoclet.core.spi.http.QueryParamResolver;
+import com.dooioo.se.apidoclet.core.spi.http.TypeInfoResolver;
 import com.dooioo.se.apidoclet.core.util.AnnotationUtils;
 import com.dooioo.se.apidoclet.core.util.ClassUtils;
 import com.dooioo.se.apidoclet.core.util.StringUtils;
@@ -19,7 +19,7 @@ import com.sun.javadoc.Parameter;
 /**
  * SpringMVC参数注解的解析
  */
-public class RequestParamResolver implements RestClassMethodQueryParamResolver {
+public class RequestParamResolver implements QueryParamResolver {
 
   @Override
   public boolean support(Parameter parameter, ApiDocletOptions options) {

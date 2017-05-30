@@ -3,7 +3,8 @@ package com.dooioo.se.apidoclet.model;
 import java.io.Serializable;
 
 /**
- * 对应SpringMVC RequestMapping里的consumes以及JAX-RS的@Consumes
+ * http request header : "Accept" media type,similar to SpringMVC {@code @RequestMapping#consumes} or JAX-RS
+ * {@code @Consumes}.
  */
 public class Consume implements Serializable {
   private static final long serialVersionUID = 1L;

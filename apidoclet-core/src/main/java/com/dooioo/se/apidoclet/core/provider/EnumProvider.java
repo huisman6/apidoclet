@@ -1,4 +1,4 @@
-package com.dooioo.se.apidoclet.core.handler;
+package com.dooioo.se.apidoclet.core.provider;
 
 import com.dooioo.se.apidoclet.core.ApiDocletOptions;
 import com.dooioo.se.apidoclet.core.util.ClassUtils;

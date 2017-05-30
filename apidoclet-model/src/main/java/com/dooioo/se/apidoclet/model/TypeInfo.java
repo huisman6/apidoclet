@@ -6,7 +6,7 @@ import java.util.List;
 import com.dooioo.se.apidoclet.model.util.Types;
 
 /**
- * java type类型信息的描述，如果是map的话，我们仅支持key为简单类型，如果是数组的话，仅支持一维数组
+ * java type encapsulation，如果是map的话，我们仅支持key为简单类型，如果是数组的话，仅支持一维数组
  * @author huisman
  */
 public class TypeInfo implements Serializable {

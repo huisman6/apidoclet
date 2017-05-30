@@ -19,7 +19,7 @@ import com.dooioo.se.apidoclet.model.util.spi.TypesExtension.SimpleTypeMapping;
 
 
 /**
- * 判断一些类是否集合类型或简单类型，最好判断之前先加载一下
+ * deduce class type (collection? map ? class exists ? simple type instead of complex java bean? etc) by class name
  */
 public final class Types {
   /**
