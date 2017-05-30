@@ -892,8 +892,7 @@ class ApiDoclet {
   /**
    * 对SpiMethod做后续处理
    */
-  private void postProcessSpiMethod(RestClass spiClass,
-      ProcessorContext context) {
+  private void postProcessSpiMethod(RestClass spiClass, ProcessorContext context) {
     List<RestClass.Method> methods = spiClass.getMethods();
     if (methods != null && !methods.isEmpty()) {
       for (RestClass.Method method : methods) {
@@ -1317,7 +1316,7 @@ class ApiDoclet {
         restMethod.setDeprecatedDate(new Date());
       }
 
-      // 方法功能简介，默认是方法名
+      // method web UI display name,take the method name as fall back  
       Tag[] summaryTags = methodDoc.tags(StandardDocTag.TAG_SUMMARY);
       String summary =
           ((summaryTags == null || summaryTags.length == 0 || StringUtils
@@ -1326,18 +1325,19 @@ class ApiDoclet {
       restMethod.setSummary(summary);
 
       String comment = methodDoc.commentText();
-      // 设置方法说明
+      // method java-doc comment
       restMethod.setDescription(StringUtils.trim(comment));
-      // 解析类上的其他注释
+      
+      // additional java doc tags,exclude the StandardDocTag
       Tag[] allTags = methodDoc.tags();
-
-      // 要忽略标注的javadoc tag注释
       Set<String> skippedTags =
           new HashSet<>(Arrays.asList('@' + StandardDocTag.TAG_VERSION,
               '@' + StandardDocTag.TAG_AUTHOR,
               '@' + StandardDocTag.TAG_DEPREACTED,
+              '@' + StandardDocTag.TAG_PARAM,
               '@' + StandardDocTag.TAG_SINCE, '@' + StandardDocTag.TAG_SUMMARY,
-              '@' + StandardDocTag.TAG_RETURN_TYPE));
+              '@' + StandardDocTag.TAG_RETURN_TYPE,
+              '@' + StandardDocTag.TAG_BIZ_CODES));
       JavaDocTags docTags = new JavaDocTags();
       if (allTags != null && allTags.length > 0) {
         for (Tag tag : allTags) {
@@ -1349,7 +1349,7 @@ class ApiDoclet {
       }
       restMethod.setAdditionalDocTags(docTags);
 
-      // 解析方法上的注解
+      // parse all annotations on this method
       AnnotationDesc[] annotationDescs = methodDoc.annotations();
       if (annotationDescs != null && annotationDescs.length > 0) {
         JavaAnnotations javaAnnotations = new JavaAnnotations();
