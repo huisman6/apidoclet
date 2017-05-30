@@ -1,0 +1,499 @@
+<!DOCTYPE HTML>
+<html lang="zh-cn" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<head th:include="fragment/common :: incloud_frame">
+</head>
+</head>
+<div th:fragment="method">
+	<link rel="stylesheet" type="text/css" href="../../static/css/doc.css"
+		th:href="@{/static/css/doc.css}" />
+	<link rel="stylesheet"
+		href="/static/css/highlight_8.5_monokai_sublime.min.css" />
+	<script src="/static/js/highlight_8.5.min.js"></script>
+	<div class="body_header">
+		<h2>
+			<span th:utext="${currentApp.original.appName}"></span> - <span
+				th:utext="${spi.original.summary}"></span> <span class="grey"
+				th:utext="'('+${method.original.summary}+')'"> </span>
+		</h2>
+		<p style="color: #aaa; font-size: 10px;">
+			<span th:text="'since : '+${method.original.since}">2012-12-12</span>
+			<span style="margin-left: 20px;"
+				th:text="'author : ' +${method.original.author}"></span>
+		</p>
+		<p th:if="!${method.original.loginNeedless}" class="warn"
+			th:text="需要授权"></p>
+		<p class="tips mt_30" th:utext="${method.original.description}"></p>
+		<div class="clearfix"></div>
+	</div>
+	<div class="body_base mt_50">
+		<div class="body_main">
+			<div class="doc_detail">
+				<h1 class="border_bottom" id="environment">
+					<i class="triangle"></i>环境参数
+				</h1>
+				
+				<div style="display: none">
+					<table border="1" cellpadding="0" cellspacing="0">
+						<tbody>
+							<tr >
+								<th th:each="head : ${currentApp.original?.apiDocJson?.env?.headers}">
+									<span th:text="${head}"></span>
+								</th>
+							</tr>
+							<tr  th:each="row : ${currentApp.original?.apiDocJson?.env?.rows}">
+								<td  th:each="column : ${row.columns}" th:text="${column}">正式环境</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<h1 class="border_bottom active" id="link">
+					<i class="triangle"></i>请求路径
+				</h1>
+				<div>
+					<table border="1" cellpadding="0" cellspacing="0">
+						<tbody>
+							<tr>
+								<th width="20%">请求模式</th>
+								<th>请求地址</th>
+							</tr>
+							<tr>
+								<td th:utext="${method.original.mapping.method.name}"></td>
+								<td
+									th:utext="${currentApp.original.ignoreVirtualPath}? ${method.original.mapping.path} : '/'+${#strings.replace(currentApp.original.app,'-','/')}+${method.original.mapping.path}"></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<h1 class="border_bottom active" id="header">
+					<i class="triangle"></i>头部参数
+				</h1>
+				<div>
+					<table border="1" cellpadding="0" cellspacing="0">
+						<thead>
+							<tr>
+								<th width="22%">名称</th>
+								<th width="20%">类型</th>
+								<th width="10%">是否必须</th>
+								<th width="12%">默认值</th>
+								<th width="36%">描述</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="header: ${method.original.requestHeaders}">
+								<td th:utext="${header.name}">fields</td>
+								<td th:utext="${header.type.simpleActualType}">String</td>
+								<td th:utext="${header.required?'必填':'非必须'}">必须</td>
+								<td
+									th:utext="${#strings.isEmpty(header.defaultValue)}?'无':${header.defaultValue}">
+									无</td>
+								<td th:utext="${header.comment}">需要返回的字段列表，可选值为返回示例值中的可以看到的字段</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<h1 class="border_bottom active" id="path">
+					<i class="triangle"></i>路径参数
+				</h1>
+				<div>
+					<table border="1" cellpadding="0" cellspacing="0" class="table">
+						<thead>
+							<tr>
+								<th width="22%">名称</th>
+								<th width="20%">类型</th>
+								<th>描述</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="path: ${method.original.pathParams}">
+								<td th:utext="${path.name}">fields</td>
+								<td th:utext="${path.type.simpleActualType}">String</td>
+
+								<td th:utext="${path.comment}">需要返回的字段列表，可选值为返回示例值中的可以看到的字段</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<h1 class="border_bottom active" id="request">
+					<i class="triangle"></i>请求参数
+				</h1>
+				<div>
+					<table border="1" cellpadding="0" cellspacing="0" class="table">
+						<thead>
+							<tr>
+								<th width="22%">名称</th>
+								<th width="20%">类型</th>
+								<th width="10%">是否必须</th>
+								<th width="12%">默认值</th>
+								<th width="36%">描述</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="query: ${method.original.queryParams}">
+								<td th:utext="${query.name}">fields</td>
+								<td
+									th:text="${(query.type.array or query.type.collection)?(query.type.simpleActualType+'[]'):(query.type.simpleActualType+'')}">String</td>
+								<td th:utext="${query.required?'必填':'非必须'}">必须</td>
+								<td
+									th:utext="${#strings.isEmpty(query.defaultValue)}?'无':${query.defaultValue}">
+									无</td>
+								<td th:utext="${query.comment}"></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<h1 class="border_bottom active" id="responseParams">
+					<i class="triangle"></i>响应字段
+				</h1>
+				<div style="color: red;" th:if="${voidFlag}">
+					<b style="padding-left: 12px;">无返回值</b>
+				</div>
+				<div th:if="${!voidFlag}" class="J_sCon">
+					<table border="1" cellpadding="0" cellspacing="0" class="table">
+						<thead>
+							<tr>
+								<th width="30%">名称</th>
+								<th width="30%">类型</th>
+								<th width="15%">默认值</th>
+								<th width="25%">描述</th>
+							</tr>
+						</thead>
+						<tbody th:with="returnType=${method.original.returnType}">
+							<tr class="J_tableTrigger "
+								th:classappend="${simpleType ? '' : 'parent'}">
+								<td><i th:if="!${simpleType}" class="triangle"></i> <span
+									th:text="${returnTypeName}"></span></td>
+								<td th:text="${returnTypeName}"></td>
+								<td
+									th:utext="${returnType.type.map ? '{}' : returnType.type.collection or returnType.type.array ? '[]': ''}"></td>
+								<td></td>
+							</tr>
+							<tr class="child" style="display: none;">
+								<td colspan="4">
+									<div class="list list1">
+										<ul th:class="${iterStat.odd} ? ' tr' :'tr even'"
+											th:classappend="${!field.type.enum and #lists.isEmpty(field.modelFields) ? '' : 'parent'}"
+											th:each="field,iterStat: ${returnType.fields}"
+											th:with="parent=${!field.type.enum and !#lists.isEmpty(field.modelFields)}">
+											<li class="td-1" style="width: 25%; text-indent: 25px;">
+												<i th:if="${parent}" class="triangle"></i><span
+												th:utext="${field.name}"></span>
+											</li>
+											<li class="td-2" style="width: 30%;"
+												th:text="${(field.type.array or field.type.collection)?(field.type.array?field.type.simpleActualType+'[]':('List&lt;'+field.type.simpleActualType+'&gt;')):(field.type.simpleActualType+'')}"></li>
+											<li class="td-3" style="width: 10%;"
+												th:utext="${field.type.map ? '{}' : field.type.collection or field.type.array ? '[]': ''}">10001</li>
+											<li class="td-4" style="width: 25%;"
+												th:utext="${field.comment}">用户数字ID</li>
+											<li th:if="${parent}" th:class="${parent ? 'child' :''}"
+												style="display: none">
+												<ul class="tr xx"
+													th:each="child,iterStat: ${field.modelFields}">
+													<li class="td-1" style="width: 24%; text-indent: 25px;"
+														th:utext="${child.name}"></li>
+													<li class="td-2" style="width: 25%"
+														th:text="${(child.type.array or child.type.collection)?(child.type.array?child.type.simpleActualType+'[]':'List&lt;'+child.type.simpleActualType+'&gt;'):(child.type.simpleActualType+'')}"></li>
+													<li class="td-3" style="width: 16%;"
+														th:utext="${child.type.map ? '{}' : child.type.collection or child.type.array ? '[]': ''}">10001</li>
+													<li class="td-4" style="width: 25%;"
+														th:utext="${child.comment}">用户数字ID</li>
+												</ul>
+											</li>
+										</ul>
+
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<h1 class="border_bottom active" id="responseExample">
+					<i class="triangle"></i>响应示例
+				</h1>
+				<div th:if="${!voidFlag}" class="J_sCon">
+					<pre>
+                        <code class="json" th:text="${returnJsonInfo}">
+                        </code>
+                    </pre>
+				</div>
+
+				<h1 class="border_bottom" id="responseCode">
+					<i class="triangle"></i>业务码
+				</h1>
+				<div style="display: none">
+					<table border="1" cellpadding="0" cellspacing="0" class="table">
+						<thead>
+							<tr>
+								<th width="20%">业务码</th>
+								<th width="30%">业务码说明</th>
+								<th>描述</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="code: ${method.original.bizCodes}">
+								<td th:utext="${code.code}">code</td>
+								<td th:utext="${code.message}">message</td>
+								<td th:utext="${code.comment}">comment</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<h1 class="border_bottom active" id="example">
+					<i class="triangle"></i>请求示例
+				</h1>
+				<div class="J_sCon">
+					<div class="code-tab">
+						<ul class="tab-panel J_codeTabPanel">
+							<li data-index="0" class="cur">CURL</li>
+						</ul>
+						<div class="tab-con J_codeTabCon">
+							<div class="tab-item-0" style="display: block;">
+								<div>
+									<pre>
+                                        <code class="shell"
+											th:utext="${curl}">
+                                        </code>
+                                    </pre>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="right_container">
+			<div class="index_container">
+				<ol>
+					<li><a href="#environment">环境参数</a></li>
+					<li><a href="#link">请求路径</a></li>
+					<li><a href="#header">头部参数</a></li>
+					<li><a href="#path">路径参数</a></li>
+					<li><a href="#request">请求参数</a></li>
+					<li><a href="#responseParams">响应字段</a></li>
+					<li><a href="#responseExample">响应示例</a></li>
+					<li><a href="#responseCode">业务码</a></li>
+					<li><a href="#example">请求示例</a></li>
+				</ol>
+			</div>
+			<div class="clearfix"></div>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+	<script>
+		hljs.initHighlightingOnLoad();
+	</script>
+</div>
+
+<div th:fragment="postman">
+	<link rel="stylesheet"
+		href="/static/css/highlight_8.5_monokai_sublime.min.css" />
+	<script src="/static/js/highlight_8.5.min.js"></script>
+	<div class="body_header">
+		<h2>
+			<span th:utext="${currentApp.original.appName}"></span> - <span
+				class="grey">(导出到Postman)</span>
+		</h2>
+		<div class="tips mt_30">
+			我们支持三种方式导出到Postman(推荐Postman3.0以上)：开发本地自测、API网关简单测试、 Postman自动化测试。<br />
+			<p>
+				<b>开发本地自测</b>：开发人员在自己的机器上调试服务接口，需要在导出的Url里指定host参数，比如：host=http://localhost:8090。
+				本地自测的特点是不经过API网关，所以没有登录校验，LoginNeedless注解被忽略，但你可手动添加请求头：X-Route-By(值不为空即可)，就会触发登录校验。
+				。另外，X-Login-UserCode、X-Login-CompanyId请求头不会自动添加，如果你想测试，需要手动添加X-Login-UserCode、X-Login-CompanyId等代表当前登录用户的Request
+				Header。
+			</p>
+			<p>
+				<b>API网关简单测试</b>：标准请求流程，这种导出方式host默认为API网关（http://api.route.dooioo.org），请求参数都是默认值。对REST接口的请求都会经过API网关，登录校验会生效，所以如果某接口需要登录授权，那么你需要申请X-Token，如果校验通过之后，会自动添加当前登录用户相关的Request
+				Header。
+			</p>
+			<p>
+				<b>Postman自动化测试</b>：标准请求流程，和API网关简单测试唯一不同的是请求参数值全部使用Postman变量占位符，而不是默认值，比如{{userName}}，这种占位符可用于自动化测试。
+			</p>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+	<div class="body_base mt_50">
+		<div class="body_main">
+			<div class="doc_detail">
+				<h1 class="border_bottom" id="gCode">
+					<i class="triangle"></i>开发本地自测
+				</h1>
+				<div>
+				<pre>
+	                   <code
+						th:text="'http://api.doc.dooioo.org/api/v1/doc/'+${currentApp.id}+'/postman?usePlaceholder=false&amp;ignoreVirtualPath=true&amp;host=yourhost'">
+						</code>
+	                                    		 </pre>
+				</div>
+				
+				<h1 class="border_bottom" id="gCode">
+					<i class="triangle"></i>API网关简单测试
+				</h1>
+				<div>
+				<pre>
+	                                     		<code
+						th:text="'http://api.doc.dooioo.org/api/v1/doc/'+${currentApp.id}+'/postman?usePlaceholder=false'"></code>
+	                                     	</pre>
+				</div>
+				
+				
+				<h1 class="border_bottom" id="gCode">
+					<i class="triangle"></i>Postman自动化测试
+				</h1>
+				<div>
+				<pre>
+	                                    		 	<code
+						th:text="'http://api.doc.dooioo.org/api/v1/doc/'+${currentApp.id}+'/postman'"></code>
+	                                    		 </pre>
+				</div>
+			</div>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+	<script>
+		hljs.initHighlightingOnLoad();
+	</script>
+</div>
+
+
+<div th:fragment="bizcode">
+	<link rel="stylesheet"
+		href="/static/css/highlight_8.5_monokai_sublime.min.css" />
+	<script src="/static/js/highlight_8.5.min.js"></script>
+	<script src="/static/js/remarkable-1.6.2.min.js"></script>
+	<div class="body_header">
+		<h2>
+			<span th:utext="${currentApp.original.appName}"></span> - <span
+				class="grey">(业务码及文档)</span>
+		</h2>
+		<div class="tips mt_30">
+			业务码(BizCode)是在业务处理过程中不符合预期时给客户端的响应信息，包含code和message。
+			<p/>响应结构如下：
+			<pre>
+	<code class="json">
+	{
+	  "code": 210000, //业务码
+	  "message": "员工已离职", //业务码说明
+	  "path": "/v1/users/87812",  //请求路径
+	  "timestamp": 134212243332  //请求时间戳
+	}
+	</code>
+	</pre> 
+	     <p/>
+			<p>
+				另外，业务码值在<b style="color: red;">900000-1000000</b>之间的是API网关及通用组件返回的。
+			</p>
+			
+			<br/>
+			<p>
+			    本文由SPI的readme说明文档自动生成。
+			</p>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+	<div class="body_base mt_50">
+		<div class="body_main">
+			<div class="doc_detail">
+				<h1 class="border_bottom active" id="gCode">
+					<i class="triangle"></i>业务码
+				</h1>
+				<div>
+					<table border="1" cellpadding="0" cellspacing="0">
+						<tbody>
+							<tr>
+								<th width="20%">业务码</th>
+								<th width="30%">业务码说明</th>
+								<th>描述</th>
+							</tr>
+							<tr th:each="gCode: ${currentApp.providedBizCodes}">
+								<td th:utext="${gCode.code}">code</td>
+								<td th:utext="${gCode.message}">message</td>
+								<td th:utext="${gCode.comment}">comment</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+<div class="doc_detail">
+	<h1 class="border_bottom active" id="maven">
+		<i class="triangle"></i>Maven 依赖
+	</h1>
+	<div th:if="${currentApp.original.artifact}">
+		<pre>
+		<code class="xml" th:inline="text">
+ &lt;dependency&gt;
+   &lt;groupId&gt;[[${currentApp.original.artifact.groupId}]]&lt;/groupId&gt;
+   &lt;artifactId&gt;[[${currentApp.original.artifact.artifactId}]]&lt;/artifactId&gt;
+   &lt;version&gt;[[${currentApp.original.artifact.version}]]&lt;/version&gt;
+ &lt;dependency&gt;
+		</code>
+	</pre>
+	</div>
+</div>
+<div class="doc_detail">
+	<h1 class="border_bottom active" id="other">
+		<i class="triangle"></i>其他说明
+	</h1>
+		<div id="markdownView">
+		</div>
+</div>
+		</div>
+		<div class="right_container">
+			<div class="index_container">
+				<ol>
+					<li><a href="#gCode">业务码</a></li>
+					<li><a href="#maven">Maven依赖</a></li>
+					<li><a href="#other">其他说明</a></li>
+				</ol>
+			</div>
+			<div class="clearfix"></div>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+	<script th:inline="javascript">
+	/*<![CDATA[*/
+
+		hljs.initHighlightingOnLoad();
+		
+		var md = new Remarkable('full', {
+			  html:         false,        // Enable HTML tags in source
+			  xhtmlOut:     false,        // Use '/' to close single tags (<br />)
+			  breaks:       false,        // Convert '\n' in paragraphs into <br>
+			  langPrefix:   'language-',  // CSS language prefix for fenced blocks
+			  linkify:      true,         // autoconvert URL-like texts to links
+			  linkTarget:   '',           // set target to open link in
+
+			  // Enable some language-neutral replacements + quotes beautification
+			  typographer:  false,
+
+			  // Double + single quotes replacement pairs, when typographer enabled,
+			  // and smartquotes on. Set doubles to '«»' for Russian, '„“' for German.
+			  quotes: '“”‘’',
+
+			  // Highlighter function. Should return escaped HTML,
+			  // or '' if input not changed
+			  highlight: function (str, lang) {
+			    if (lang && hljs.getLanguage(lang)) {
+			      try {
+			        return hljs.highlight(lang, str).value;
+			      } catch (__) {}
+			    }
+
+			    try {
+			      return hljs.highlightAuto(str).value;
+			    } catch (__) {}
+
+			    return ''; // use external default escaping
+			  }
+			});
+		 	$("#markdownView").html(md.render([[${currentApp.original.artifact}?${currentApp.original.artifact.readmeFileContent}:'']]));
+		 	
+		 	/*]]>*/
+	</script>
+</div>
+</html>

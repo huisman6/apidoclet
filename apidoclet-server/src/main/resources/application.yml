@@ -1,0 +1,23 @@
+spring:
+   profiles.active: test
+   application.name: apidoclet-server
+   
+server:
+   port: 8089
+   tomcat:
+       max-threads: 100
+       uri-encoding: UTF-8
+   compression:
+       enabled: true
+       mime-types: application/json,application/javascript,text/html,text/xml,text/plain,text/css 
+       
+       
+spring.thymeleaf:
+    cache: false # Enable template caching.
+    check-template-location: true # Check that the templates location exists.
+    content-type: text/html # Content-Type value.
+    enabled: true # Enable MVC Thymeleaf view resolution.
+    encoding: UTF-8 # Template encoding.
+    mode: HTML5 # Template mode to be applied to templates. See also StandardTemplateModeHandlers.
+    prefix: "classpath:/templates/" # Prefix that gets prepended to view names when building a URL.
+    suffix: ".html"  # Suffix that gets appended to view names when building a URL.

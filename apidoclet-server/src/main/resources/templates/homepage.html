@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>SE-链家开放平台 - 首页</title>
+    <link href="../static/css/main.css" th:href="@{/static/css/main.css}" rel="stylesheet"
+          type="text/css"/>
+    <link type="text/css" rel="stylesheet" href="../static/css/common.css"/>
+</head>
+<body>
+<div th:replace="fragment/common :: logo_menu">
+</div>
+<!--background images-->
+<div class="main-container">
+    <video id="vid" preload="auto" loop="loop" width="100%"></video>
+</div>
+<!--story today-->
+<div class="detail-container"></div>
+<!--operate btn-->
+<div class="icon-foot">
+    <div class="icon-foot-right">
+        <a><div class="icon-btn icon-video"></div></a>
+        <a><div class="icon-btn icon-left"></div></a>
+        <a><div class="icon-btn icon-right"></div></a>
+        <a><div class="icon-btn icon-font"></div></a>
+    </div>
+</div>
+<div th:replace="fragment/common :: footer"></div>
+</body>
+<script src="../static/js/jquery.min.js" th:src="@{/static/js/jquery.min.js}"></script>
+<script type="text/javascript" src="../static/js/initialize.js"></script>
+<script src="../static/js/main.js" th:src="@{/static/js/main.js}"></script>
+<script type="text/javascript">
+    $(function () {
+        if ($('.carousel-inner > li').length > 1) {
+            $('.carousel-indicators').removeClass('hide');
+        }
+    });
+</script>
+</html>

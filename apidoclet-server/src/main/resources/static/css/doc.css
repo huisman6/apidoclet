@@ -1,0 +1,89 @@
+.J_sCon .list1 {
+    /*display: block;*/
+}
+
+.J_sCon .list {
+    margin: 0;
+    /*display: none;*/
+    font-size: 12px;
+}
+
+.J_sCon li {
+    background: none;
+    float: left;
+    padding: 5px 10px;
+    text-indent: 0;
+}
+
+.J_sCon table .even {
+    background: #f1f7fb;
+}
+
+.even {
+     background-color: #f5f5f5;
+}
+
+.J_tableTrigger {
+    cursor: pointer;
+}
+.tr {
+    overflow: hidden;
+}
+
+.list > ul > li.child {
+    padding: 0;
+}
+.list > ul > li.child > ul {
+    padding-left: 10px;
+}
+.list > ul > li {
+    position: relative;
+    width: 100%;
+}
+tr.active > td > i.triangle {
+    border-color: #666 transparent transparent transparent;
+    left: 12px;
+    top: 14px;
+}
+tr > td{
+    position: relative;
+}
+tr > td > i.triangle {
+    border-color: transparent transparent transparent #666;
+    border-width: 5px;
+    left: 14px;
+    top: 13px;
+}
+
+.list > ul > li.active > i.triangle {
+    border-color: #666 transparent transparent transparent;
+    left: 22px;
+    top: 13px;
+}
+.list > ul > li > i.triangle {
+    border-color: transparent transparent transparent #666;
+    border-width: 5px;
+    left: 24px;
+    top: 10px;
+}
+.xx:nth-child(even){
+    background-color: #f5f5f5;
+}
+.xx:nth-child(odd){
+    background-color: #ffffff;
+}
+
+.child > ul {
+    position: relative;
+}
+.child > ul:before {
+    content: " ";
+    width: 6px;
+    height: 11px;
+    position: absolute;
+    top: 6px;
+    left: 27px;
+    border: 0 solid #aaa;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+}

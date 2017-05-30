@@ -1,0 +1,79 @@
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+<head th:include="fragment/common :: incloud_frame">
+</head>
+<body>
+	<div th:replace="fragment/common :: logo_menu"></div>
+	<div th:replace="fragment/common :: header_container"></div>
+	<div class="main_container mt_30" style="margin-bottom: 32px;">
+		<div class="left_container" th:replace="fragment/common :: catalog"></div>
+		<div class="body_container">
+			<div th:replace="v1/method :: ${routing}"></div>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+	<div th:replace="fragment/common :: footer">
+
+	</div>
+</body>
+<script src="../../static/js/method.js" th:src="@{/static/js/method.js}" ></script>
+<script type="text/javascript">
+	$(function() {
+		$('.tab-panel li').unbind('click').bind(
+				'click',
+				function() {
+					$(this).addClass('cur');
+					$(this).nextAll().removeClass('cur');
+					$(this).prevAll().removeClass('cur');
+					var obj = $(this).parent().parent().find(
+							'div.tab-item-' + $(this).attr('data-index'));
+					$(obj).show();
+					$(obj).nextAll().hide();
+					$(obj).prevAll().hide();
+				});
+
+		$('.doc_detail h1').unbind('click').bind('click', function() {
+			if ($(this).hasClass('active')) {
+				$(this).next().fadeOut();
+				$(this).removeClass('active');
+			} else {
+				$(this).next().fadeIn();
+				$(this).addClass('active');
+			}
+		});
+
+		$('.right_container').find('ol li').unbind('click').bind('click',
+				function() {
+					$(this).parent().find('li.active').removeClass('active');
+					$(this).addClass('active');
+				});
+
+		$('.parent ol').unbind('click').bind('click', function() {
+			if ($(this).hasClass('active')) {
+				$(this).next().fadeOut();
+				$(this).removeClass('active');
+			} else {
+				$(this).next().fadeIn();
+				$(this).addClass('active');
+			}
+		});
+
+		$('.left_container').off('click').on('click', 'ol li a', function(e) {
+			var li = $(this).parent('li');
+			var ol = $(this).siblings('ol');
+			if ($(this).hasClass('active')) {
+				$(this).removeClass('active');
+				ol.slideUp(200);
+
+			} else {
+				$(this).addClass('active');
+				ol.slideDown(200);
+				li.siblings('li').children().siblings('ol').slideUp(200);
+				li.siblings('li').find('a').removeClass('active');
+				li.siblings('li').find('ol').css("display", "none");
+			}
+		});
+	});
+</script>
+</html>
