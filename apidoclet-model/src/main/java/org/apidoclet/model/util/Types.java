@@ -19,14 +19,18 @@ import org.apidoclet.model.util.spi.TypesExtension.SimpleTypeMapping;
 
 
 /**
- * deduce class type (collection? map ? class exists ? simple type instead of complex java bean? etc) by class name
+ * deduce class type (collection? map ? class exists ? simple type instead of complex java bean?
+ * etc) by class name
  */
 public final class Types {
   /**
-   * 维度信息，默认为[]。比如：[][]就是两维数组的意思,[]一维数组
+   * array dimension info,default:[]. eg：[][] means two-dimension array and [] means one-dimension
+   * array
    */
   public static final String DIMENTION_STR = "[]";
-  // 默认简单类型
+  /**
+   * register simple type and its default value,a simple type does't need to parse fields
+   */
   private static final List<SimpleTypeMapping> DEFAULT_SIMPLE_TYPE_MAPPINGS =
       Arrays
           .asList(
@@ -54,11 +58,11 @@ public final class Types {
                   .currentTimeMillis()),
               new SimpleTypeMapping(java.util.Date.class.getName(), System
                   .currentTimeMillis()),
-              new SimpleTypeMapping(String.class.getName(), "\"字符串\""),
+              new SimpleTypeMapping(String.class.getName(), "\"String\""),
               new SimpleTypeMapping(StringBuffer.class.getName(),
-                  new StringBuffer("\"字符串\"")),
+                  new StringBuffer("\"String\"")),
               new SimpleTypeMapping(StringBuilder.class.getName(),
-                  new StringBuilder("\"字符串\"")),
+                  new StringBuilder("\"String\"")),
               new SimpleTypeMapping(BigDecimal.class.getName(), new BigDecimal(
                   "0.0")),
               new SimpleTypeMapping(BigInteger.class.getName(), new BigInteger(
@@ -68,26 +72,26 @@ public final class Types {
                   .getName()), new SimpleTypeMapping(Object.class.getName(),
                   null));
   /**
-   * 简单类型及其默认值，包括基本数据类型及其封装类，日期字符串等
+   * simple type and its default value mapping
    */
   private static final Map<String, Object> SIMPLE_CLASS_TYPES = new HashMap<>();
   /**
-   * 表示一个类型是集合类型的，包括数组，Set,List,ArrayList,LinkList,Collection
+   * collection type ,include array,Set,List,ArrayList,LinkList,Collection etc;
    */
   private static final Set<String> COLLECTION_TYPES = new HashSet<>(
       Arrays.asList(List.class.getName(), Set.class.getName(),
           Collection.class.getName(), AbstractCollection.class.getName()));
 
   static {
-    // 设置简单类型及其默认值
+    // register default simple type
     for (SimpleTypeMapping simpleType : DEFAULT_SIMPLE_TYPE_MAPPINGS) {
       addSimpleTypeValueMapping(simpleType.getQulifiedTypeName(),
           simpleType.getDefaultValue());
     }
+    // detect provided simple type and collection type by JAVA SPI mechanism
     List<TypesExtension> typesExtensions =
         ServiceLoaderUtils.getServicesOrNull(TypesExtension.class);
     if (typesExtensions != null) {
-      // 获取所有的类型扩展，覆盖已有的配置
       for (TypesExtension extension : typesExtensions) {
         Set<String> additionalCollectionTypes =
             extension.getAdditionalCollectionTypes();
@@ -109,15 +113,9 @@ public final class Types {
   }
 
   private Types() {
-    super();
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * 添加映射信息
-   * 
-   * @author huisman
-   */
   private static void addSimpleTypeValueMapping(String qualifiedType,
       Object defaultValue) {
     SIMPLE_CLASS_TYPES.put(qualifiedType, defaultValue);
@@ -125,9 +123,9 @@ public final class Types {
 
 
   /**
-   * 判断给定的类型名称是否是简单类型
+   * test whether the given type is simple type, usually, a simple type doesn't need to parse fields
    * 
-   * @param type
+   * @param type full-qualified class name
    */
   public static boolean isSimpleType(String type) {
     Class<?> clazz = getIfExists(type);
@@ -137,6 +135,9 @@ public final class Types {
     return isAssignablePrimitive(clazz);
   }
 
+  /**
+   * test whether the given class is a sub class of JDK class(Number,String,Date,Calendar)
+   */
   private static boolean isAssignablePrimitive(Class<?> clazz) {
     if (clazz.isPrimitive()) {
       return true;
@@ -159,9 +160,9 @@ public final class Types {
   }
 
   /**
-   * 获取简单类型的默认值
+   * get default value of the simple type, usually, use to create a JSON snippet
    * 
-   * @param type
+   * @param type full-qualified class name
    * @since 2016年1月16日
    */
   public static Object getSimpleTypeDefaultValue(String type) {
@@ -169,12 +170,12 @@ public final class Types {
   }
 
   /**
-   * 判断类型是否是集合类型，先试图加载一次，如果加载不到类，则根据类名判断
+   * check whether {@code qualifiedTypeName} is a collection type
    */
   public static boolean isCollectionType(String qualifiedTypeName) {
     Class<?> clazz = getIfExists(qualifiedTypeName);
     if (clazz == null) {
-      // 不在classpath路径上
+      // absent in classpath
       return COLLECTION_TYPES.contains(qualifiedTypeName);
     }
     if (clazz.isArray() || Collection.class.isAssignableFrom(clazz)) {
@@ -184,7 +185,9 @@ public final class Types {
   }
 
   /**
-   * 检查类型否在当前classpath上
+   * check whether {@code type} exists in classpath, use {@code Class#forName(String)}
+   * 
+   * @param type full-qualified class name
    */
   public static boolean isPresent(String type) {
     try {
@@ -196,7 +199,10 @@ public final class Types {
   }
 
   /**
-   * 如果类型存在，则返回，否则返回null
+   * get the class object by its qualified name (use {@code Class#forName(String)}) if it exists in
+   * classpath,otherwise return null
+   * 
+   * @param type full-qualified class name
    */
   public static Class<?> getIfExists(String type) {
     try {
@@ -207,7 +213,9 @@ public final class Types {
   }
 
   /**
-   * 类型是否是map
+   * check whether {@code type} is or a sub class of {@code java.util.Map}
+   * 
+   * @param type full-qualified class name
    */
   public static boolean isMap(String type) {
     Class<?> clazz = getIfExists(type);
@@ -221,7 +229,10 @@ public final class Types {
   }
 
   /**
-   * 获取简单类型，类似 Class.getSimpleName(); null return "".
+   * get the simple type name,similar to {@code Class.getSimpleName()}. if {@code type } is null,
+   * return empty string("").
+   * 
+   * @param type full-qualified class name
    */
   public static String getSimpleTypeName(String type) {
     if (type == null) {

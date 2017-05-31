@@ -187,7 +187,7 @@ public class VersionedRestApp implements Serializable {
 
 
   /**
-   * 获取spi id对应的spi class
+   * rest class id => rest class
    */
   public Map<String, VersionGroupedRestClass> getIdToSpiClassMap() {
     return Collections.unmodifiableMap(this.idToRestClassMap);
@@ -197,16 +197,16 @@ public class VersionedRestApp implements Serializable {
   /**
    * sort by {@code RestClass#getSummary()}
    */
-  public List<VersionGroupedRestClass> getSpiClasses() {
-    final List<VersionGroupedRestClass> spiClasses =
+  public List<VersionGroupedRestClass> getRestClasses() {
+    final List<VersionGroupedRestClass> restClasses =
         new ArrayList<>(this.idToRestClassMap.values());
-    Collections.sort(spiClasses, new Comparator<VersionGroupedRestClass>() {
+    Collections.sort(restClasses, new Comparator<VersionGroupedRestClass>() {
       @Override
       public int compare(VersionGroupedRestClass s1, VersionGroupedRestClass s2) {
         return s1.getOriginal().getSummary()
             .compareTo(s2.getOriginal().getSummary());
       }
     });
-    return spiClasses;
+    return restClasses;
   }
 }

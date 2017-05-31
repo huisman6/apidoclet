@@ -856,9 +856,10 @@ class ApiDoclet {
       }
     }
     restApp.setBuildAt(new Date());
+    restApp.setLastBuildAt(new Date());
     restApp.setBuildBy(context.getOpitons().getBuildBy());
     restApp.setBuildIpAddress(context.getOpitons().getBuildIpAddress());
-    // 构件信息
+    // artifact info
     restApp.setArtifact(this.resolveArtifactIfAny(context.getOpitons()));
   }
 

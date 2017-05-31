@@ -1,7 +1,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:th="http://www.thymeleaf.org">
 <div th:fragment="incloud_frame">
-	<title>SE API Gateway Documentation</title>
+	<title>API Documentation</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<link rel="stylesheet" type="text/css" href="../../static/css/main.css"
 		th:href="@{/static/css/main.css}" />
@@ -14,60 +14,52 @@
 </div>
 
 <div class="logo_menu" th:fragment="logo_menu">
-	<span>Lorik Api Document , Project Sponsor :
-		Jerry.Hu、Jail.Hu、Huisman.Liu、Charles.Xu、Lucifer.Han</span> <span class="menu"> <a
-		href="/">首页</a> <a href="/doc">API文档</a> <a
-		href="/books/microservice-practise/index.html" target="_blank">微服务实战</a>
-		<a href="/books/microservice-practise/parts/chapter2/doc-auto.html"
-		target="_blank">文档自动生成: How？</a>
+	<span>Project Sponsor :
+		Jerry.Hu、Jail.Hu、Huisman.Liu、Charles.Xu、Lucifer.Han</span> <span class="menu">
+		<a href="/books/microservice-practise/parts/chapter2/doc-auto.html">文档自动生成:
+			How？</a>
 	</span>
-</div>
-
-<div class="header_container" th:fragment="header_container">
-	<div class="table body_center">
-		<h1 class="table_cell vertical_middle">SE RESTFUL API 使用详解</h1>
-	</div>
 </div>
 
 <div class="left_container" th:fragment="catalog">
 	<h2 class="text_indent2 border_bottom title">API Summary</h2>
 	<ol class="parent">
 		<li th:each="app : ${apps}"><a
-			th:href="'#'+${app.original.appName}" href="#微服务名称"
+			th:href="'#'+${app.original.appName}" href="#serice-name"
 			th:class="${app.id == currentApp.id ? 'active' : ''}"><i
 				class="triangle"></i><span th:text="${app.original.appName}"></span>
-		</a>
+				<span class="app_buildAt"
+				th:text="${#dates.format(app.original.lastBuildAt, 'yyyy-MM-dd')}"></span> </a>
 			<ol class="son"
 				th:style="${app.id == currentApp.id ? '' : 'display: none;'}">
-				<li><a
-					th:title="'导出'+${app.original.appName}+'到Postman'" th:href="@{/v1/doc/{appId}/export/postman(appId=${app.id})}"
+				<li><a th:title="'export'+${app.original.appName}+'to Postman'"
+					th:href="@{/v1/doc/export/{appId}/postman(appId=${app.id})}"
 					th:class="${app.id == currentApp.id and 'postman' eq routing ? 'active' : ''}"><span
-						th:text="'导出到Postman'"></span></a>
-				</li>
+						th:text="'Export to Postman'"></span></a></li>
 				<li><a
-					th:href="@{/v1/doc/{appId}/bizcode(appId=${app.id})}"
-					th:class="${(app.id == currentApp.id  and 'bizcode' eq routing) ? 'active' : ''}">业务码及文档
-				</a></li>
-				<li th:each="cla: ${app.spiClasses}"><a
-					th:href="'#'+${cla.original.summary}" href="#服务的spi名称"
-					th:class="${spi.id == cla.id ? 'active' : ''}"><i
+					th:href="@{/v1/doc/{appId}/projectInfo(appId=${app.id})}"
+					th:class="${(app.id == currentApp.id  and 'projectInfo' eq routing) ? 'active' : ''}">Project
+						Document </a></li>
+				<li th:each="cla: ${app.restClasses}"><a
+					th:href="'#'+${cla.original.summary}" href="#service name"
+					th:class="${restClass.id == cla.id ? 'active' : ''}"><i
 						th:class="${#maps.size(cla.methodMap) > 0 ? 'triangle' :''}"></i><span
-						th:text="${cla.original.summary}">服务的spi名称</span></a>
+						th:text="${cla.original.summary}">rest class</span></a>
 					<ol class="grandson"
-						th:style="${spi.id == cla.id ? '' : 'display: none;'}"
+						th:style="${restClass.id == cla.id ? '' : 'display: none;'}"
 						th:if="${#maps.size(cla.methodMap) > 0}">
-						<li th:each="version : ${cla.methodMap}"><a href="#服务版本号"
+						<li th:each="version : ${cla.methodMap}"><a
+							href="#api version"
 							th:title="${version.key}+'.'+${mt.original.summary}"
 							th:class="${method.id == mt.id ? 'active' : ''}"
 							th:each="mt : ${version.value}"
-							th:href="@{/v1/doc/{appId}/{spiClassId}/{methodId}
-                                           (appId=${app.id},spiClassId=${cla.id},
+							th:href="@{/v1/doc/{appId}/{restClassId}/{methodId}
+                                           (appId=${app.id},restClassId=${cla.id},
                                            methodId=${mt.id})}">
-							<span th:utext="${version.key}+'.'+${mt.original.summary}" th:class="ellipsis"
-							>服务版本号</span>
+								<span th:utext="${version.key}+'.'+${mt.original.summary}">api
+									version</span>
 						</a></li>
-					</ol>
-			</li>
+					</ol></li>
 			</ol></li>
 	</ol>
 </div>
@@ -77,13 +69,8 @@
 	<div class="main_container">
 		<div class="footer-level">
 			<ul>
-				<li><span href="#" title="">SE-链家开放平台合作:<a href="#"
-						target="_blank">点此反馈</a></span></li>
-				<li><span>2016 - 2017 SE.SH.LIANJIA.COM 版权所有</span></li>
-				<li><a href="#" target="_blank">房客源系统</a></li>
-				<li><a href="#" target="_blank">服务台</a></li>
-				<li><a href="#" target="_blank">掌上链家</a></li>
-				<li><a href="#" target="_blank">交易管家</a></li>
+				<li><span href="#" title="">GitHub:<a href="#"
+						target="_blank">https://github.com/huisman6/apidoclet</a></span></li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
