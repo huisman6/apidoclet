@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -808,7 +809,8 @@ class ApiDoclet {
               // 每列的值不能超过headers的数量
               String[] columnValues = new String[headers.length];
               int columnLen =
-                  (headers.length > columns.size()) ? columns.size()
+                  (headers.length > columns.size())
+                      ? columns.size()
                       : headers.length;
               for (int j = 0; j < columnLen; j++) {
                 columnValues[j] = columns.getString(j);
@@ -968,12 +970,12 @@ class ApiDoclet {
         }
       });
       if (candicateFiles != null && candicateFiles.length > 0) {
-        // 只取第一个
+        //only choose first
         File readme = candicateFiles[0];
         artifact.setReadmeFileName(readme.getName());
 
         try (BufferedReader reader =
-            Files.newBufferedReader(Paths.get(readme.getAbsolutePath()))) {
+            Files.newBufferedReader(Paths.get(readme.getAbsolutePath()), StandardCharsets.UTF_8)) {
           StringBuilder cotentSb = new StringBuilder(500);
           char[] buffer = new char[256];
           int count = -1;
@@ -1073,7 +1075,8 @@ class ApiDoclet {
     }
 
     /**
-     * 初始化Method,设置方法名，方法所在的类，方法的唯一标识identity</br> 解析EndpointMapping信息以及JavaDoc Tag、Java注解。
+     * 初始化Method,设置方法名，方法所在的类，方法的唯一标识identity</br>
+     * 解析EndpointMapping信息以及JavaDoc Tag、Java注解。
      */
     private RestClass.Method processRestClassMethod(ClassDoc classDoc,
         MethodDoc methodDoc) {
@@ -1275,7 +1278,8 @@ class ApiDoclet {
       // 版本号
       Tag[] versionTags = methodDoc.tags(StandardDocTag.TAG_VERSION);
       String version =
-          ((versionTags == null || versionTags.length == 0) ? ""
+          ((versionTags == null || versionTags.length == 0)
+              ? ""
               : versionTags[0].text().trim());
       // 如果版本号不存在则设置为默认版本号。RequestMapping解析的时候，如果发现version依旧为空，则从requestPath中解析
       // 这是在ApiDoclet的最后几步执行此逻辑
@@ -1299,8 +1303,8 @@ class ApiDoclet {
       String since =
           ((sinceTags == null || sinceTags.length == 0 || StringUtils
               .isNullOrEmpty(sinceTags[0].text())) ? new SimpleDateFormat(
-              "yyyy-MM-dd").format(new Date()) : StringUtils.trim(sinceTags[0]
-              .text()));
+                  "yyyy-MM-dd").format(new Date()) : StringUtils.trim(sinceTags[0]
+                      .text()));
       restMethod.setSince(since);
 
       boolean deprecated =
@@ -1316,18 +1320,19 @@ class ApiDoclet {
         restMethod.setDeprecatedDate(new Date());
       }
 
-      // method web UI display name,take the method name as fall back  
+      // method web UI display name,take the method name as fall back
       Tag[] summaryTags = methodDoc.tags(StandardDocTag.TAG_SUMMARY);
       String summary =
           ((summaryTags == null || summaryTags.length == 0 || StringUtils
-              .isNullOrEmpty(summaryTags[0].text())) ? methodDoc.name()
-              : StringUtils.trim(summaryTags[0].text()));
+              .isNullOrEmpty(summaryTags[0].text()))
+                  ? methodDoc.name()
+                  : StringUtils.trim(summaryTags[0].text()));
       restMethod.setSummary(summary);
 
       String comment = methodDoc.commentText();
       // method java-doc comment
       restMethod.setDescription(StringUtils.trim(comment));
-      
+
       // additional java doc tags,exclude the StandardDocTag
       Tag[] allTags = methodDoc.tags();
       Set<String> skippedTags =
