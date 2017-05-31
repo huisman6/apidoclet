@@ -31,7 +31,7 @@ public class ApiDocletOptions {
       Arrays.asList(ApiDocletOptions.CLASS_DIR, ApiDocletOptions.VERSION,
           ApiDocletOptions.ARTIFACT_ID, ApiDocletOptions.ARTIFACT_VERSION,
           ApiDocletOptions.ARTIFACT_GROUP_ID, ApiDocletOptions.APP_NAME,
-          ApiDocletOptions.APP, ApiDocletOptions.EXPORT_TO));
+          ApiDocletOptions.APP, ApiDocletOptions.EXPORT_TO, ApiDocletOptions.WEB_CONTEXT_PATH));
 
   /**
    * option length = 1 , only have one option key
@@ -56,13 +56,18 @@ public class ApiDocletOptions {
   public static final String PRINT = DEFAULT_PREFIX + "print";
 
   /**
-   *  compiled class path, apidoclet classloader use it to load class
+   * compiled classes output directory path, apidoclet classloader use it to find class file
    */
   public static final String CLASS_DIR = DEFAULT_PREFIX + "classdir";
   /**
    * default rest api version
    */
   public static final String VERSION = DEFAULT_PREFIX + "version";
+
+  /**
+   * web application's context path,prepend it to request path
+   */
+  public static final String WEB_CONTEXT_PATH = DEFAULT_PREFIX + "webContextPath";
 
   /**
    * workspace or project root directory
@@ -93,16 +98,17 @@ public class ApiDocletOptions {
   public static final String IGNORE_VIRTUAL_PATH = DEFAULT_PREFIX
       + "ignoreVirtualPath";
   /**
-   * source java file directory 
+   * source java file directory
    */
   public static final String SOURCE_PATH = "-sourcepath";
   /**
-   * could be spring.application.name or FeignClient#name, global service identifier 
+   * could be spring.application.name or FeignClient#name, global service identifier
+   * 
    * @see {@link RestService#getName()}
    */
   public static final String APP = DEFAULT_PREFIX + "app";
   /**
-   * app's web-ui display name 
+   * {@code -app } web-ui display name
    */
   public static final String APP_NAME = DEFAULT_PREFIX + "appName";
   /**
@@ -113,14 +119,14 @@ public class ApiDocletOptions {
   /**
    * non-standard apidoclet options
    */
-  private Map<String, String> othersOptions =new HashMap<String, String>();
+  private Map<String, String> othersOptions = new HashMap<String, String>();
 
   /**
    * apidoclet classloader , sometimes we need to invoke a class field( reflect)
    */
   private ClassLoader apidocletClassLoader = null;
   /**
-   * compiled classes output directory, apidoclet classloader use it to find class if necessary
+   * compiled classes output directory, apidoclet classloader use it to locate a class file if necessary
    */
   private String classdir;
   /**
@@ -128,7 +134,7 @@ public class ApiDocletOptions {
    */
   private String exportTo;
   /**
-   * service global identify 
+   * service global identify
    */
   private String app;
   /**
@@ -149,7 +155,7 @@ public class ApiDocletOptions {
   private String buildBy;
 
   /**
-   * output the parsed doc to console or not
+   * whether output the parsed doc to console or not
    */
   private boolean print = false;
 
@@ -157,6 +163,11 @@ public class ApiDocletOptions {
    * workspace or project root directory
    */
   private String projectRootDir;
+
+  /**
+   * web application's context
+   */
+  private String webCotextPath;
 
 
   /**
@@ -212,6 +223,16 @@ public class ApiDocletOptions {
   public String optionValue(String key) {
     return this.othersOptions.get(key);
   }
+
+
+  /**
+   * @return the web application's context
+   */
+  public String getWebCotextPath() {
+    return this.webCotextPath;
+  }
+
+
 
   /**
    * 主要用于javadoc执行过程中打印错误信息
@@ -328,8 +349,8 @@ public class ApiDocletOptions {
    */
   public static ApiDocletOptions readFromCommandLine(RootDoc rootDoc) {
     rootDoc.printNotice("available options：");
-    
- // 程序启动参数
+
+    // 程序启动参数
     String[][] options = rootDoc.options();
     ApiDocletOptions apiDocletOptions = new ApiDocletOptions();
     Map<String, String> otherOptions = new HashMap<>();
@@ -341,15 +362,18 @@ public class ApiDocletOptions {
       if (StringUtils.isNullOrEmpty(options[i][0])) {
         continue;
       }
-      
+
       rootDoc.printNotice(Arrays.toString(options[i]));
-      
+
       if (input.length == 1) {
         otherOptions.put(options[i][0], null);
       } else {
         otherOptions.put(options[i][0], options[i][1]);
       }
       switch (options[i][0]) {
+        case ApiDocletOptions.WEB_CONTEXT_PATH:
+          apiDocletOptions.webCotextPath = StringUtils.trim(options[i][1]);
+          break;
         case ApiDocletOptions.CLASS_DIR:
           apiDocletOptions.classdir = transformClassDir(options[i][1]);
           break;
@@ -380,14 +404,13 @@ public class ApiDocletOptions {
           break;
       }
     }
-    
+
     rootDoc.printNotice("\n");
     apiDocletOptions.buildBy = (System.getProperty("user.name"));
     String ipAddress = "unknown";
     try {
       ipAddress = InetAddress.getLocalHost().getHostAddress();
-    } catch (Exception e) {
-    }
+    } catch (Exception e) {}
     apiDocletOptions.buildIpAddress =
         (ipAddress + " " + System.getProperty("os.name"));
 
@@ -399,12 +422,12 @@ public class ApiDocletOptions {
     apiDocletOptions.docReporter = (rootDoc);
     // 不可修改
     apiDocletOptions.othersOptions = Collections.unmodifiableMap(otherOptions);
-    
+
     // 默认classes加载器，如果我们需要加载类
-    String classdir=apiDocletOptions.classdir;
-    
+    String classdir = apiDocletOptions.classdir;
+
     apiDocletOptions.apidocletClassLoader =
-        new ApiDocletClassLoader(ApiDoclet.class.getClassLoader(),classdir);
+        new ApiDocletClassLoader(ApiDoclet.class.getClassLoader(), classdir);
     return apiDocletOptions;
   }
 
