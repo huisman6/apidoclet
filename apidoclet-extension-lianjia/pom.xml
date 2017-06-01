@@ -6,8 +6,8 @@
 		<artifactId>apidoclet-parent</artifactId>
 		<version>1.0.1</version>
 	</parent>
-	<artifactId>apidoclet-extension-spring-mvc</artifactId>
 	<version>1.0.1-SNAPSHOT</version>
+	<artifactId>apidoclet-extension-lianjia</artifactId>
 	<dependencies>
 		<dependency>
 			<groupId>jdk.tools</groupId>
@@ -17,10 +17,12 @@
 			<systemPath>${toolsjar}</systemPath>
 			<optional>true</optional>
 		</dependency>
+
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>apidoclet-core</artifactId>
+			<artifactId>apidoclet-extension-spring</artifactId>
 			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
+
 	</dependencies>
 </project>

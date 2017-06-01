@@ -32,48 +32,27 @@ import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.cli.Commandline;
 
 /**
- * API文档的插件，仅支持javadoc 1.5以上
+ * apidoclet maven plugin ,only support Maven 3.2 and above
  */
 @Mojo(name = "deploy")
 public class ApiDocletMojo extends AbstractMojo {
   private static final String OPTIONS_FILE_NAME = "options";
   private static final String PACKAGES_FILE_NAME = "packages";
-
   /**
-   * javadoc 可执行文件的路径
+   * executable-javadoc program
    */
   @Parameter(property = "javadocExecutable")
   private String javadocExecutable;
 
   /**
-   * Maven编译后 class文件的输出目录
+   * complied classes output directory
    */
-  @Parameter(property = "classdir", defaultValue = "${project.build.outputDirectory}")
+  @Parameter(property = "classdir",
+      defaultValue = "${project.build.outputDirectory}")
   private String classdir;
 
-  /** */
   @Component
   private ToolchainManager toolchainManager;
-
-  /**
-   * Specifies the maximum Java heap size to be used when launching the Javadoc tool. JVMs refer to
-   * this property as the <code>-Xmx</code> parameter. Example: '512' or '512m'. The memory unit
-   * depends on the JVM used. The units supported could be: <code>k</code>, <code>kb</code>,
-   * <code>m</code>, <code>mb</code>, <code>g</code>, <code>gb</code>, <code>t</code>,
-   * <code>tb</code>. If no unit specified, the default unit is <code>m</code>.
-   */
-  @Parameter(property = "maxmemory")
-  private String maxmemory;
-
-  /**
-   * Specifies the minimum Java heap size to be used when launching the Javadoc tool. JVMs refer to
-   * this property as the <code>-Xms</code> parameter. Example: '512' or '512m'. The memory unit
-   * depends on the JVM used. The units supported could be: <code>k</code>, <code>kb</code>,
-   * <code>m</code>, <code>mb</code>, <code>g</code>, <code>gb</code>, <code>t</code>,
-   * <code>tb</code>. If no unit specified, the default unit is <code>m</code>.
-   */
-  @Parameter(property = "minmemory")
-  private String minmemory;
 
   /**
    * The current build session instance. This is used for toolchain manager API calls.
@@ -81,7 +60,8 @@ public class ApiDocletMojo extends AbstractMojo {
   @Parameter(defaultValue = "${session}", readonly = true, required = true)
   private MavenSession session;
 
-  @Parameter(property = "encoding", defaultValue = "${project.build.sourceEncoding}")
+  @Parameter(property = "encoding",
+      defaultValue = "${project.build.sourceEncoding}")
   private String encoding;
 
   /**
@@ -94,7 +74,7 @@ public class ApiDocletMojo extends AbstractMojo {
 
 
   /**
-   * doclet 默认输出目录
+   * default doclet output directory
    */
   @Parameter(property = "docletOutputDir",
       defaultValue = "${project.build.directory}/apidoclet", required = true)
@@ -102,14 +82,11 @@ public class ApiDocletMojo extends AbstractMojo {
 
 
   /**
-   * 源文件的路径（绝对路径、或相对当前路径）
+   * source code path
    */
   @Parameter(property = "sourcepath")
   private String sourcepath;
 
-  /**
-   * 源文件路径下，那些包生成javadoc文档
-   */
   @Parameter(property = "subpackages")
   private String subpackages;
   /**
@@ -124,16 +101,13 @@ public class ApiDocletMojo extends AbstractMojo {
   @Parameter(defaultValue = "${settings}", readonly = true, required = true)
   private Settings settings;
 
-  /**
-   * 插件的执行环境
-   */
   @Component
   private MojoExecution execution;
 
 
 
   /**
-   * 默认doclet
+   * customized doclet class
    */
   private String doclet = ApiDocletBootStrap.class.getName();
 
@@ -145,16 +119,14 @@ public class ApiDocletMojo extends AbstractMojo {
   private String options;
 
   /**
-   * 参考示例： javadoc -doclet com.dooioo.se.lorik.apidoclet.ApiDoclet \ -docletpath
-   * ./target/classes:/M2_HOME/com/dooioo/se/lorik/lorik-apidoclet-contract/1.0.0-SNAPSHOT/lorik-
-   * apidoclet-contract-1.0.0-SNAPSHOT.jar \ -sourcepath ./src/main/java -subpackages
-   * com.dooioo.se.lorik.apidoclet\ -classdir ./target/classes -exportTo
-   * http://localhost:8080/v1/restapps/import/binary -print -ignoreVirtualPath
+   * javadoc -doclet org.apidoclet.core.ApiDoclet \ -docletpath
+   * ./target/classes:/M2_HOME/org/apidoclet/apidoclet-model/1.0.1/ apidoclet-model-1.0.1.jar \
+   * -sourcepath ./src/main/java -subpackages org.apidoclet.test\ -classdir ./target/classes
+   * -exportTo http://localhost:8089/v1/apps/import -print
    * 
    */
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    // 创建javadoc 命令行参数
     // ----------------------------------------------------------------------
     // Create command line for Javadoc
     // ----------------------------------------------------------------------
@@ -162,12 +134,13 @@ public class ApiDocletMojo extends AbstractMojo {
     try {
       javadocExecutable = getJavadocExecutable();
     } catch (IOException e) {
-      throw new MojoFailureException("can't find available javadoc executable jar", e);
+      throw new MojoFailureException("can't find available javadoc tool", e);
     }
 
-    // apidoclet output temp directory
+    // api-doclet output temporary directory
     File javadocOutputDirectory = new File(this.docletOutputDir);
-    if (javadocOutputDirectory.exists() && !javadocOutputDirectory.isDirectory()) {
+    if (javadocOutputDirectory.exists()
+        && !javadocOutputDirectory.isDirectory()) {
       throw new MojoExecutionException("IOException: docletOutputDir "
           + javadocOutputDirectory.getName() + " is not a directory.");
     }
@@ -179,17 +152,13 @@ public class ApiDocletMojo extends AbstractMojo {
 
     Commandline cmd = new Commandline();
     cmd.getShell().setQuotedArgumentsEnabled(false); // for Javadoc JVM args
-    // 工作目录里会生成@Options , @Packages 文件
+    // work directory will generate @Options and @Packages file
     cmd.setWorkingDirectory(javadocOutputDirectory.getAbsolutePath());
     cmd.setExecutable(javadocExecutable);
 
-    // 内存大小
-    addMemoryArg(cmd, "-Xmx", this.maxmemory);
-    addMemoryArg(cmd, "-Xms", this.minmemory);
-
     List<String> arguments = this.resovleArguments();
     if (arguments.size() > 0) {
-      // 追加命令行参数
+      // append command line options
       addCommandLineOptions(cmd, arguments, javadocOutputDirectory);
     }
 
@@ -200,27 +169,31 @@ public class ApiDocletMojo extends AbstractMojo {
       addCommandLinePackages(cmd, javadocOutputDirectory, packageNames);
     }
 
-    // 终于。。执行javadoc 命令
+    // finally, execute javadoc command
     executeJavadocCommandLine(cmd, javadocOutputDirectory);
   }
 
 
   /**
-   * never null
+   * resolve command line options,never return null
    */
   private List<String> resovleArguments() {
     List<String> arguments = new ArrayList<String>();
-    // 编码
-    addArgIfNotEmpty(arguments, "-encoding", JavadocUtil.quotedArgument(getEncoding()));
+    // encoding
+    addArgIfNotEmpty(arguments, "-encoding",
+        JavadocUtil.quotedArgument(getEncoding()));
 
     // see com.sun.tools.javadoc.Start#parseAndExecute(String argv[])
-    addArgIfNotEmpty(arguments, "-locale", JavadocUtil.quotedArgument(this.locale));
+    addArgIfNotEmpty(arguments, "-locale",
+        JavadocUtil.quotedArgument(this.locale));
 
-    // 如果配置了此参数，则构造 -sourcepath -subpackage -doclet
+    // -sourcepath -subpackage -doclet
     List<String> sourcePaths = getSourcePaths();
 
-    if ((StringUtils.isEmpty(this.sourcepath)) && (StringUtils.isNotEmpty(this.subpackages))) {
-      this.sourcepath = StringUtils.join(sourcePaths.iterator(), File.pathSeparator);
+    if ((StringUtils.isEmpty(this.sourcepath))
+        && (StringUtils.isNotEmpty(this.subpackages))) {
+      this.sourcepath =
+          StringUtils.join(sourcePaths.iterator(), File.pathSeparator);
     }
     addArgIfNotEmpty(arguments, "-sourcepath",
         JavadocUtil.quotedPathArgument(getSourcePath(sourcePaths)));
@@ -232,21 +205,21 @@ public class ApiDocletMojo extends AbstractMojo {
     addArgIfNotEmpty(arguments, "-doclet", this.doclet);
     String docletpath = getDocletPath();
     addArgIfNotEmpty(arguments, "-docletpath", docletpath);
-    // class path 默认为docletpath，主要是SpringMVC、Spring Cloud类，在 lorik-apidoclet-1.0.1.jar里
-    // 当前项目里的依赖暂不添加进来
+    // we have repackage spring-mvc/spring-cloud annotation to apidoclet-extension-spring-mvc
+    // class path,default set to doclet path，
     addArgIfNotEmpty(arguments, "-classpath", docletpath);
 
-    // 添加 classdir
+    // add classdir option
     addArgIfNotEmpty(arguments, "-classdir", this.classdir);
-    // 添加其他options
-    addArgIfNotEmpty(arguments, "-projectRootDir", this.session.getExecutionRootDirectory());
+    // add other apidoclet option
+    addArgIfNotEmpty(arguments, "-projectRootDir",
+        this.session.getExecutionRootDirectory());
     addArgIfNotEmpty(arguments, "-artifactGroupId", this.project.getGroupId());
     addArgIfNotEmpty(arguments, "-artifactId", this.project.getArtifactId());
     addArgIfNotEmpty(arguments, "-artifactVersion", this.project.getVersion());
 
-
     addArgIfNotEmpty(arguments, null, "-protected");
-    // 可选参数
+    // additional apidoclet options
     addArgIfNotEmpty(arguments, null, this.options);
     return arguments;
   }
@@ -265,9 +238,10 @@ public class ApiDocletMojo extends AbstractMojo {
     if (StringUtils.isEmpty(path) &&
 
     getLog().isWarnEnabled()) {
-      getLog().warn(
-          "No docletpath option was found. Please review <docletpath/> or <docletArtifact/>"
-              + " or <doclets/>.");
+      getLog()
+          .warn(
+              "No docletpath option was found. Please review <docletpath/> or <docletArtifact/>"
+                  + " or <doclets/>.");
     }
 
     return path;
@@ -279,18 +253,23 @@ public class ApiDocletMojo extends AbstractMojo {
    * @param cmd not null
    * @param javadocOutputDirectory not null
    */
-  private void executeJavadocCommandLine(Commandline cmd, File javadocOutputDirectory)
-      throws MojoExecutionException {
+  private void executeJavadocCommandLine(Commandline cmd,
+      File javadocOutputDirectory) throws MojoExecutionException {
     if (getLog().isDebugEnabled()) {
       // no quoted arguments
-      getLog().debug(CommandLineUtils.toString(cmd.getCommandline()).replaceAll("'", ""));
+      getLog().debug(
+          CommandLineUtils.toString(cmd.getCommandline()).replaceAll("'", ""));
     }
-    CommandLineUtils.StringStreamConsumer err = new CommandLineUtils.StringStreamConsumer();
-    CommandLineUtils.StringStreamConsumer out = new CommandLineUtils.StringStreamConsumer();
+    CommandLineUtils.StringStreamConsumer err =
+        new CommandLineUtils.StringStreamConsumer();
+    CommandLineUtils.StringStreamConsumer out =
+        new CommandLineUtils.StringStreamConsumer();
     try {
       int exitCode = CommandLineUtils.executeCommandLine(cmd, out, err);
 
-      String output = (StringUtils.isEmpty(out.getOutput()) ? null : '\n' + out.getOutput().trim());
+      String output =
+          (StringUtils.isEmpty(out.getOutput()) ? null : '\n' + out.getOutput()
+              .trim());
 
       if (exitCode != 0) {
         if (StringUtils.isNotEmpty(output)) {
@@ -302,7 +281,8 @@ public class ApiDocletMojo extends AbstractMojo {
         getLog().info(output);
       }
     } catch (CommandLineException e) {
-      throw new MojoExecutionException("Unable to execute javadoc command: " + e.getMessage(), e);
+      throw new MojoExecutionException("Unable to execute javadoc command: "
+          + e.getMessage(), e);
     }
 
     // ----------------------------------------------------------------------
@@ -322,7 +302,7 @@ public class ApiDocletMojo extends AbstractMojo {
   }
 
   /**
-   * 获取javadoc 的可执行文件的路径
+   * find executable javadoc program
    */
   private String getJavadocExecutable() throws IOException {
     Toolchain tc = getToolchain();
@@ -331,13 +311,15 @@ public class ApiDocletMojo extends AbstractMojo {
       getLog().info("Toolchain in maven-javadoc-plugin: " + tc);
       if (javadocExecutable != null) {
         getLog().warn(
-            "Toolchains are ignored, 'javadocExecutable' parameter is set to " + javadocExecutable);
+            "Toolchains are ignored, 'javadocExecutable' parameter is set to "
+                + javadocExecutable);
       } else {
         javadocExecutable = tc.findTool("javadoc");
       }
     }
 
-    String javadocCommand = "javadoc" + (SystemUtils.IS_OS_WINDOWS ? ".exe" : "");
+    String javadocCommand =
+        "javadoc" + (SystemUtils.IS_OS_WINDOWS ? ".exe" : "");
 
     File javadocExe;
 
@@ -356,8 +338,10 @@ public class ApiDocletMojo extends AbstractMojo {
       }
 
       if (!javadocExe.isFile()) {
-        throw new IOException("The javadoc executable '" + javadocExe
-            + "' doesn't exist or is not a file. Verify the <javadocExecutable/> parameter.");
+        throw new IOException(
+            "The javadoc executable '"
+                + javadocExe
+                + "' doesn't exist or is not a file. Verify the <javadocExecutable/> parameter.");
       }
 
       return javadocExe.getAbsolutePath();
@@ -371,19 +355,21 @@ public class ApiDocletMojo extends AbstractMojo {
     // For IBM's JDK 1.2
     if (SystemUtils.IS_OS_AIX) {
       javadocExe =
-          new File(SystemUtils.getJavaHome() + File.separator + ".." + File.separator + "sh",
-              javadocCommand);
+          new File(SystemUtils.getJavaHome() + File.separator + ".."
+              + File.separator + "sh", javadocCommand);
     }
     // For Apple's JDK 1.6.x (and older?) on Mac OSX
     // CHECKSTYLE_OFF: MagicNumber
     else if (SystemUtils.IS_OS_MAC_OSX && SystemUtils.JAVA_VERSION_FLOAT < 1.7f)
     // CHECKSTYLE_ON: MagicNumber
     {
-      javadocExe = new File(SystemUtils.getJavaHome() + File.separator + "bin", javadocCommand);
+      javadocExe =
+          new File(SystemUtils.getJavaHome() + File.separator + "bin",
+              javadocCommand);
     } else {
       javadocExe =
-          new File(SystemUtils.getJavaHome() + File.separator + ".." + File.separator + "bin",
-              javadocCommand);
+          new File(SystemUtils.getJavaHome() + File.separator + ".."
+              + File.separator + "bin", javadocCommand);
     }
 
     // ----------------------------------------------------------------------
@@ -393,7 +379,8 @@ public class ApiDocletMojo extends AbstractMojo {
       Properties env = CommandLineUtils.getSystemEnvVars();
       String javaHome = env.getProperty("JAVA_HOME");
       if (StringUtils.isEmpty(javaHome)) {
-        throw new IOException("The environment variable JAVA_HOME is not correctly set.");
+        throw new IOException(
+            "The environment variable JAVA_HOME is not correctly set.");
       }
       if ((!new File(javaHome).getCanonicalFile().exists())
           || (new File(javaHome).getCanonicalFile().isFile())) {
@@ -404,9 +391,12 @@ public class ApiDocletMojo extends AbstractMojo {
       javadocExe = new File(javaHome + File.separator + "bin", javadocCommand);
     }
 
-    if (!javadocExe.getCanonicalFile().exists() || !javadocExe.getCanonicalFile().isFile()) {
-      throw new IOException("The javadoc executable '" + javadocExe
-          + "' doesn't exist or is not a file. Verify the JAVA_HOME environment variable.");
+    if (!javadocExe.getCanonicalFile().exists()
+        || !javadocExe.getCanonicalFile().isFile()) {
+      throw new IOException(
+          "The javadoc executable '"
+              + javadocExe
+              + "' doesn't exist or is not a file. Verify the JAVA_HOME environment variable.");
     }
 
     return javadocExe.getAbsolutePath();
@@ -437,49 +427,48 @@ public class ApiDocletMojo extends AbstractMojo {
     File optionsFile = new File(javadocOutputDirectory, OPTIONS_FILE_NAME);
 
     StringBuilder options = new StringBuilder();
-    options.append(StringUtils.join(arguments.toArray(new String[arguments.size()]),
+    options.append(StringUtils.join(
+        arguments.toArray(new String[arguments.size()]),
         SystemUtils.LINE_SEPARATOR));
 
     try {
-      FileUtils.fileWrite(optionsFile.getAbsolutePath(), null /* platform encoding */,
-          options.toString());
+      FileUtils.fileWrite(optionsFile.getAbsolutePath(),
+          null /* platform encoding */, options.toString());
     } catch (IOException e) {
-      throw new MojoExecutionException("Unable to write '" + optionsFile.getName()
-          + "' temporary file for command execution", e);
+      throw new MojoExecutionException("Unable to write '"
+          + optionsFile.getName() + "' temporary file for command execution", e);
     }
 
     cmd.createArg().setValue("@" + OPTIONS_FILE_NAME);
   }
 
-  private void addCommandLinePackages(Commandline cmd, File javadocOutputDirectory,
-      List<String> packageNames) throws MojoExecutionException {
+  private void addCommandLinePackages(Commandline cmd,
+      File javadocOutputDirectory, List<String> packageNames)
+      throws MojoExecutionException {
     File packagesFile = new File(javadocOutputDirectory, PACKAGES_FILE_NAME);
 
     try {
-      FileUtils.fileWrite(packagesFile.getAbsolutePath(), null /* platform encoding */,
-          StringUtils.join(packageNames.iterator(), SystemUtils.LINE_SEPARATOR));
+      FileUtils
+          .fileWrite(packagesFile.getAbsolutePath(),
+              null /* platform encoding */, StringUtils.join(
+                  packageNames.iterator(), SystemUtils.LINE_SEPARATOR));
     } catch (IOException e) {
-      throw new MojoExecutionException("Unable to write '" + packagesFile.getName()
-          + "' temporary file for command execution", e);
+      throw new MojoExecutionException("Unable to write '"
+          + packagesFile.getName() + "' temporary file for command execution",
+          e);
     }
 
     cmd.createArg().setValue("@" + PACKAGES_FILE_NAME);
   }
 
-  /**
-   * 获取源文件路径下的所有目录（即包名）
-   */
   protected List<String> getFiles(List<String> sourcePaths) {
     List<String> files = new ArrayList<String>();
-    if (StringUtils.isEmpty(subpackages)) {
-      // 暂时不实现要排除的包名
-      String[] excludedPackages = new String[] {};
-
-      for (String sourcePath : sourcePaths) {
-        File sourceDirectory = new File(sourcePath);
-        // 忽略 源文件的过滤
-        JavadocUtil.addFilesFromSource(files, sourceDirectory, null, null, excludedPackages);
-      }
+    // exclude package?
+    String[] excludedPackages = new String[] {};
+    for (String sourcePath : sourcePaths) {
+      File sourceDirectory = new File(sourcePath);
+      JavadocUtil.addFilesFromSource(files, sourceDirectory, null, null,
+          excludedPackages);
     }
 
     return files;
@@ -487,22 +476,25 @@ public class ApiDocletMojo extends AbstractMojo {
 
 
   /**
-   * 获取源文件路径
+   * get java source file's directory
    */
   protected List<String> getSourcePaths() {
     List<String> sourcePaths;
-
     if (StringUtils.isEmpty(sourcepath)) {
-      // 获取当前路径
+      // source path is empty?
       sourcePaths =
-          new ArrayList<String>(JavadocUtil.pruneDirs(project, getProjectSourceRoots(project)));
+          new ArrayList<String>(JavadocUtil.pruneDirs(project,
+              getProjectSourceRoots(project)));
       if (project.getExecutionProject() != null) {
-        sourcePaths.addAll(JavadocUtil.pruneDirs(project, getExecutionProjectSourceRoots(project)));
+        sourcePaths.addAll(JavadocUtil.pruneDirs(project,
+            getExecutionProjectSourceRoots(project)));
       }
 
     } else {
-      // 如果配置了，就用这个路径
-      sourcePaths = new ArrayList<String>(Arrays.asList(JavadocUtil.splitPath(sourcepath)));
+      // use provided source path
+      sourcePaths =
+          new ArrayList<String>(
+              Arrays.asList(JavadocUtil.splitPath(sourcepath)));
       sourcePaths = JavadocUtil.pruneDirs(project, sourcePaths);
     }
     sourcePaths = JavadocUtil.pruneDirs(project, sourcePaths);
@@ -511,7 +503,7 @@ public class ApiDocletMojo extends AbstractMojo {
   }
 
   /**
-   * 获取项目根目录
+   * get root project dir
    */
   protected List<String> getProjectSourceRoots(MavenProject p) {
     if ("pom".equals(p.getPackaging().toLowerCase())) {
@@ -532,27 +524,28 @@ public class ApiDocletMojo extends AbstractMojo {
         .getCompileSourceRoots()));
   }
 
-  /**
-   * 添加内存参数
-   */
-  private void addMemoryArg(Commandline cmd, String arg, String memory) {
-    if (StringUtils.isNotEmpty(memory)) {
-      try {
-        cmd.createArg().setValue("-J" + arg + JavadocUtil.parseJavadocMemory(memory));
-      } catch (IllegalArgumentException e) {
-        if (getLog().isErrorEnabled()) {
-          getLog()
-              .error("Malformed memory pattern for '" + arg + memory + "'. Ignore this option.");
-        }
-      }
-    }
-  }
+  // /**
+  // * add java mem-limited args
+  // */
+  // private void addMemoryArg(Commandline cmd, String arg, String memory) {
+  // if (StringUtils.isNotEmpty(memory)) {
+  // try {
+  // cmd.createArg().setValue("-J" + arg + JavadocUtil.parseJavadocMemory(memory));
+  // } catch (IllegalArgumentException e) {
+  // if (getLog().isErrorEnabled()) {
+  // getLog()
+  // .error("Malformed memory pattern for '" + arg + memory + "'. Ignore this option.");
+  // }
+  // }
+  // }
+  // }
 
   /**
    * 项目编码
    */
   private String getEncoding() {
-    return (StringUtils.isEmpty(encoding)) ? ReaderFactory.FILE_ENCODING : encoding;
+    return (StringUtils.isEmpty(encoding)) ? ReaderFactory.FILE_ENCODING
+        : encoding;
   }
 
   private Toolchain getToolchain() {
@@ -569,7 +562,8 @@ public class ApiDocletMojo extends AbstractMojo {
    * @param files not null
    * @return the list of package names for files in the sourcePaths
    */
-  private List<String> getPackageNames(List<String> sourcePaths, List<String> files) {
+  private List<String> getPackageNames(List<String> sourcePaths,
+      List<String> files) {
     return getPackageNamesOrFilesWithUnnamedPackages(sourcePaths, files, true);
   }
 
@@ -579,7 +573,8 @@ public class ApiDocletMojo extends AbstractMojo {
    * @return a list files with unnamed package names for files in the sourecPaths
    */
   @SuppressWarnings("unused")
-  private List<String> getFilesWithUnnamedPackages(List<String> sourcePaths, List<String> files) {
+  private List<String> getFilesWithUnnamedPackages(List<String> sourcePaths,
+      List<String> files) {
     return getPackageNamesOrFilesWithUnnamedPackages(sourcePaths, files, false);
   }
 
@@ -592,8 +587,8 @@ public class ApiDocletMojo extends AbstractMojo {
    * @see #getFiles(List)
    * @see #getSourcePaths()
    */
-  private List<String> getPackageNamesOrFilesWithUnnamedPackages(List<String> sourcePaths,
-      List<String> files, boolean onlyPackageName) {
+  private List<String> getPackageNamesOrFilesWithUnnamedPackages(
+      List<String> sourcePaths, List<String> files, boolean onlyPackageName) {
     List<String> returnList = new ArrayList<String>();
 
     if (!StringUtils.isEmpty(sourcepath)) {
@@ -611,7 +606,8 @@ public class ApiDocletMojo extends AbstractMojo {
         }
 
         if (currentFile.contains(currentSourcePath)) {
-          String packagename = currentFile.substring(currentSourcePath.length() + 1);
+          String packagename =
+              currentFile.substring(currentSourcePath.length() + 1);
 
           /*
            * Remove the miscellaneous files
@@ -622,7 +618,8 @@ public class ApiDocletMojo extends AbstractMojo {
           }
 
           if (onlyPackageName && packagename.lastIndexOf("/") != -1) {
-            packagename = packagename.substring(0, packagename.lastIndexOf("/"));
+            packagename =
+                packagename.substring(0, packagename.lastIndexOf("/"));
             packagename = packagename.replace('/', '.');
 
             if (!returnList.contains(packagename)) {
@@ -666,8 +663,8 @@ public class ApiDocletMojo extends AbstractMojo {
    * @param repeatKey repeat or not the key in the command line
    * @param splitValue if <code>true</code> given value will be tokenized by comma
    */
-  private void addArgIfNotEmpty(List<String> arguments, String key, String value,
-      boolean repeatKey, boolean splitValue) {
+  private void addArgIfNotEmpty(List<String> arguments, String key,
+      String value, boolean repeatKey, boolean splitValue) {
     if (StringUtils.isNotEmpty(value)) {
       if (StringUtils.isNotEmpty(key)) {
         arguments.add(key);
@@ -703,7 +700,8 @@ public class ApiDocletMojo extends AbstractMojo {
    * @param value the argument value to be added.
    * @param repeatKey repeat or not the key in the command line
    */
-  private void addArgIfNotEmpty(List<String> arguments, String key, String value, boolean repeatKey) {
+  private void addArgIfNotEmpty(List<String> arguments, String key,
+      String value, boolean repeatKey) {
     addArgIfNotEmpty(arguments, key, value, repeatKey, true);
   }
 

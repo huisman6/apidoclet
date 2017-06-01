@@ -76,7 +76,8 @@
 	<modules>
 		<module>apidoclet-core</module>
 		<module>apidoclet-model</module>
-		<module>apidoclet-extension-spring-mvc</module>
+		<module>apidoclet-extension-lianjia</module>
+		<module>apidoclet-extension-spring</module>
 		<module>apidoclet-maven-plugin</module>
 		<module>apidoclet-server</module>
 	</modules>
