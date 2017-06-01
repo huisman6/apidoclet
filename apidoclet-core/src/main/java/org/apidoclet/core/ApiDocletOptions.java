@@ -67,7 +67,7 @@ public class ApiDocletOptions {
   /**
    * web application's context path,prepend it to request path
    */
-  public static final String WEB_CONTEXT_PATH = DEFAULT_PREFIX + "webContextPath";
+  public static final String WEB_CONTEXT_PATH = DEFAULT_PREFIX + "webContext";
 
   /**
    * workspace or project root directory
