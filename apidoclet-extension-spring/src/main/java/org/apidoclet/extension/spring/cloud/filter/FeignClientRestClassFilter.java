@@ -23,7 +23,7 @@ public class FeignClientRestClassFilter implements RestClassFilter {
 
   @Override
   public boolean accept(ClassDoc classDoc, ApiDocletOptions options) {
-    // @FeignClient annotation present
+    // @FeignClient annotation presents
     return AnnotationUtils.isPresent(classDoc.annotations(),
         FeignClient.class.getName());
   }

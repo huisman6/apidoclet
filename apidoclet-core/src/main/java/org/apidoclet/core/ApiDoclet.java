@@ -81,7 +81,7 @@ import com.sun.javadoc.Type;
  * the customized java doc doclet,responsible for organizing all extension SPI components that are
  * used to analysis java source code
  */
-/*non-public*/class ApiDoclet {
+/* non-public */class ApiDoclet {
   /**
    * apidoclet command line options, an option must be start with prefix '-'. eg: -exportTo , -app
    */
@@ -211,8 +211,7 @@ import com.sun.javadoc.Type;
    */
   private RestServiceResovler restServiceResovler = new RestServiceResovler();
 
-  ApiDoclet(ApiDocletOptions options,
-      List<RestClassFilter> restClassFilters,
+  ApiDoclet(ApiDocletOptions options, List<RestClassFilter> restClassFilters,
       List<ModelProvider> modelProviders,
       List<RestClassMethodFilter> restMethodFilters,
       List<BizCodeProvider> bizCodeProviders,
@@ -324,22 +323,24 @@ import com.sun.javadoc.Type;
   /**
    * deduce RestService identity
    * 
+   * return null indicate that the classDoc is't eligible (not a RestClass)
+   * 
    * @author huisman
    */
-  private String filterRestClassAndGetServiceName(ClassDoc classDoc) {
-    String serviceName = null;
+  private String filterRestClassAndGetServiceId(ClassDoc classDoc) {
     if (this.restClassFilters != null && this.restClassFilters.size() > 0) {
       for (RestClassFilter filter : this.restClassFilters) {
         if (filter.accept(classDoc, this.options)) {
-          serviceName = filter.getServiceIdIfAny(classDoc, this.options);
-          if (!StringUtils.isNullOrEmpty(serviceName)) {
-            return serviceName;
+          String serviceName = filter.getServiceIdIfAny(classDoc, this.options);
+          if (StringUtils.isNullOrEmpty(serviceName)) {
+            // fallback
+            return deduceServiceId(this.options);
           }
+          return serviceName;
         }
       }
     }
-    //fallback
-    return deduceServiceId(this.options);
+    return null;
   }
 
   /**
@@ -1009,9 +1010,8 @@ import com.sun.javadoc.Type;
   /* non-public */class RestServiceResovler {
     public void resolveRestService(ClassDoc classDoc, ApiDocletOptions options,
         Map<String, RestService> resolvedRestServiceMap) {
-
       String serviceName =
-          ApiDoclet.this.filterRestClassAndGetServiceName(classDoc);
+          ApiDoclet.this.filterRestClassAndGetServiceId(classDoc);
       if (StringUtils.isNullOrEmpty(serviceName)) {
         return;
       }
