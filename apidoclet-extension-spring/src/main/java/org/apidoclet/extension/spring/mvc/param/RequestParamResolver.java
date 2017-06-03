@@ -17,7 +17,7 @@ import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.Parameter;
 
 /**
- * SpringMVC参数注解的解析
+ * QueryParam Resolver
  */
 public class RequestParamResolver implements QueryParamResolver {
 
@@ -42,7 +42,7 @@ public class RequestParamResolver implements QueryParamResolver {
       type.setContainerType(parameter.type().qualifiedTypeName());
     }
 
-    // 属性类型为基本类型包装类型以及字符串
+    // String annotation value
     AnnotationValue valAttr = attributes.get("value");
     String value = (valAttr == null ? null : (String) valAttr.getValue());
 
@@ -58,7 +58,7 @@ public class RequestParamResolver implements QueryParamResolver {
         new QueryParam(StringUtils.isNullOrEmpty(value) ? parameter.name()
             : value, required == null ? true : required,
             defaultValue == null ? null : defaultValue);
-    // 合并枚举注释，如果有的话
+    // concatenate Enum comment
     queryParam.setComment(ClassUtils.commentWithEnumIfAny(paramComment,
         parameter.type().asClassDoc()));
     queryParam.setType(type);

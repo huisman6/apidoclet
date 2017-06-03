@@ -15,9 +15,8 @@ import com.sun.javadoc.FieldDoc;
 import com.sun.javadoc.Type;
 
 /**
+ * convert an  {@code AnnotationDesc} to normal JavaBean {@code JavaAnnotation}.
  * @author huisman
- * @version 1.0.0
- * @since 2016年1月13日 Copyright (c) 2016, BookDao All Rights Reserved.
  */
 public final class AnnotationUtils {
   private AnnotationUtils() {

@@ -11,9 +11,6 @@ import com.sun.javadoc.Parameter;
 public interface HeaderParamResolver {
 
   /**
-   * 是否支持此种参数的解析
-   * 
-   * @author huisman
    */
   boolean support(Parameter parameter, ApiDocletOptions options);
 

@@ -8,7 +8,7 @@ import org.apidoclet.model.TypeInfo;
 import com.sun.javadoc.Type;
 
 /**
- * default type info resolver,lowest priority
+ * default {@code TypeInfo} resolver,lowest priority
  */
 public class DefaultTypeInfoProvider implements TypeInfoProvider {
 

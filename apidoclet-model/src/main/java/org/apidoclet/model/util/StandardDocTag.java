@@ -1,7 +1,7 @@
 package org.apidoclet.model.util;
 
 /**
- * 我们支持的javadoc tag以及自定义的tag
+ * supported javadoc tags
  */
 public interface StandardDocTag {
   /*********** Standard Java Doc Tag ********************/
@@ -13,7 +13,7 @@ public interface StandardDocTag {
 
   /**************** ApiDoclet Doc Tag *********************/
   /**
-   * one concise sentence  to cover class or method's purpose
+   * one concise sentence to cover class or method's purpose
    */
   String TAG_SUMMARY = "summary";
   /**
@@ -21,7 +21,7 @@ public interface StandardDocTag {
    */
   String TAG_RETURN_TYPE = "returnType";
   /**
-   * business-related  code
+   * business-related code
    */
   String TAG_BIZ_CODES = "bizCodes";
 }

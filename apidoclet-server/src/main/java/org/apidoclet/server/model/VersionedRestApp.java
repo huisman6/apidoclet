@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,15 @@ public class VersionedRestApp implements Serializable {
    */
   private RestService original;
 
+  /**
+   * first built date
+   */
+  private Date builtAt;
+  /**
+   * last built date
+   */
+  private Date lastBuiltAt;
+
   public VersionedRestApp() {
     super();
   }
@@ -75,7 +85,8 @@ public class VersionedRestApp implements Serializable {
       throw new IllegalArgumentException("rest app is null");
     }
     this.original = original;
-
+    this.builtAt = new Date();
+    this.lastBuiltAt = new Date();
     List<RestClass> restClasses = original.getRestClasses();
     if (restClasses != null && restClasses.size() > 0) {
       for (RestClass restClass : restClasses) {
@@ -119,6 +130,32 @@ public class VersionedRestApp implements Serializable {
     }
   }
 
+
+
+  public Date getBuiltAt() {
+    return builtAt;
+  }
+
+
+
+  public void setBuiltAt(Date builtAt) {
+    this.builtAt = builtAt;
+  }
+
+
+
+  public Date getLastBuiltAt() {
+    return lastBuiltAt;
+  }
+
+
+
+  public void setLastBuiltAt(Date lastBuiltAt) {
+    this.lastBuiltAt = lastBuiltAt;
+  }
+
+
+
   /**
    * 当前rest app 的ID
    */
@@ -149,7 +186,7 @@ public class VersionedRestApp implements Serializable {
 
 
   /**
-   * find {@code ModelInfo} by  full qualified class name
+   * find {@code ModelInfo} by full qualified class name
    */
   public ModelInfo getModel(String className) {
     return this.modelMap.get(className);

@@ -3,7 +3,6 @@ package org.apidoclet.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -40,22 +39,13 @@ public class RestService implements Serializable {
   private String appName;
 
   /**
-   * 当前构建日期
-   */
-  private Date buildAt;
-  /**
-   * 最近一次构建日期
-   */
-  private Date lastBuildAt;
-
-  /**
    * 谁构建的，一般取 System里的环境变量
    */
   private String buildBy;
   /**
    * 构建者的IP地址
    */
-  private String buildIpAddress;
+  private String ipAddress;
 
   /**
    * 微服务的所有SPI或者SpringMVC的Controller
@@ -185,21 +175,6 @@ public class RestService implements Serializable {
     this.enumInfos = enumInfos;
   }
 
-  public Date getBuildAt() {
-    return buildAt;
-  }
-
-  public void setBuildAt(Date buildAt) {
-    this.buildAt = buildAt;
-  }
-
-  public Date getLastBuildAt() {
-    return lastBuildAt;
-  }
-
-  public void setLastBuildAt(Date lastBuildAt) {
-    this.lastBuildAt = lastBuildAt;
-  }
 
   public String getBuildBy() {
     return buildBy;
@@ -209,22 +184,23 @@ public class RestService implements Serializable {
     this.buildBy = buildBy;
   }
 
-  public String getBuildIpAddress() {
-    return buildIpAddress;
+  public String getIpAddress() {
+    return ipAddress;
   }
 
-  public void setBuildIpAddress(String buildIpAddress) {
-    this.buildIpAddress = buildIpAddress;
+  public void setIpAddress(String ipAddress) {
+    this.ipAddress = ipAddress;
   }
 
   @Override
   public String toString() {
     final int maxLen = 90;
-    return "RestApp [app=" + app + ", appName=" + appName + ", buildAt=" + buildAt
-        + ", lastBuildAt=" + lastBuildAt + ", buildBy=" + buildBy + ", buildIpAddress="
-        + buildIpAddress + ", spiClasses="
-        + (restClasses != null ? toString(restClasses, maxLen) : null) + ", spiModels="
-        + (modelInfos != null ? toString(modelInfos, maxLen) : null) + ", spiBizCodes="
+    return "RestApp [app=" + app + ", appName=" + appName + ", buildBy="
+        + buildBy + ", ipAddress=" + ipAddress + ", spiClasses="
+        + (restClasses != null ? toString(restClasses, maxLen) : null)
+        + ", models="
+        + (modelInfos != null ? toString(modelInfos, maxLen) : null)
+        + ", bizCodes="
         + (bizCodes != null ? toString(bizCodes, maxLen) : null) + "]";
   }
 
@@ -232,7 +208,8 @@ public class RestService implements Serializable {
     StringBuilder builder = new StringBuilder();
     builder.append("[");
     int i = 0;
-    for (Iterator<?> iterator = collection.iterator(); iterator.hasNext() && i < maxLen; i++) {
+    for (Iterator<?> iterator = collection.iterator(); iterator.hasNext()
+        && i < maxLen; i++) {
       if (i > 0) {
         builder.append(", ");
       }

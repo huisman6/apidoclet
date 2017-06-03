@@ -14,7 +14,7 @@ import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.Parameter;
 
 /**
- * 解析http header
+ * HTTP header resolver
  */
 public class RequestHeaderResolver implements
     HeaderParamResolver {
@@ -36,10 +36,10 @@ public class RequestHeaderResolver implements
     Map<String, AnnotationValue> attributes =
         AnnotationUtils.attributesFor(requestHeader);
 
-    // 属性类型为基本类型包装类型以及字符串
+    //String annotation value
     AnnotationValue valAttr = attributes.get("value");
     String value = (valAttr == null ? null : (String) valAttr.getValue());
-
+    // Boolean annotation value
     AnnotationValue requiredAttr = attributes.get("required");
     Boolean required =
         (requiredAttr == null ? null : (Boolean) requiredAttr.getValue());

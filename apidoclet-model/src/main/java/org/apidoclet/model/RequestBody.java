@@ -16,7 +16,7 @@ public class RequestBody implements Serializable {
    */
   private String defaultValue;
   /**
-   * 路径参数名
+   * 参数名
    */
   private String name;
 

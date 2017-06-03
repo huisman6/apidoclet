@@ -1,6 +1,7 @@
 package org.apidoclet.server.model;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import org.apidoclet.model.RestClass;
 import org.apidoclet.server.helper.DigestUtils;
@@ -29,6 +30,15 @@ public class VersionedRestMethod implements Serializable {
    * method version
    */
   private String version;
+  
+  /**
+   * first built date
+   */
+  private Date builtAt;
+  /**
+   * last built date
+   */
+  private Date lastBuiltAt;
 
   public VersionedRestMethod() {
     super();
@@ -42,6 +52,8 @@ public class VersionedRestMethod implements Serializable {
     if (StringUtils.isEmpty(namespace)) {
       throw new IllegalArgumentException("method namespace is null");
     }
+    this.builtAt=new Date();
+    this.lastBuiltAt=new Date();
     this.original = original;
     this.namespace = namespace;
     // use crc32 to generate numberic id
@@ -57,6 +69,23 @@ public class VersionedRestMethod implements Serializable {
 
   public void setOriginal(RestClass.Method original) {
     this.original = original;
+  }
+  
+
+  public Date getBuiltAt() {
+    return builtAt;
+  }
+
+  public void setBuiltAt(Date builtAt) {
+    this.builtAt = builtAt;
+  }
+
+  public Date getLastBuiltAt() {
+    return lastBuiltAt;
+  }
+
+  public void setLastBuiltAt(Date lastBuiltAt) {
+    this.lastBuiltAt = lastBuiltAt;
   }
 
   public String getId() {
@@ -75,6 +104,7 @@ public class VersionedRestMethod implements Serializable {
     this.namespace = namespace;
   }
 
+  
 
   public String getVersion() {
     return version;
@@ -87,7 +117,10 @@ public class VersionedRestMethod implements Serializable {
   @Override
   public String toString() {
     return "VersionedRestMethod [original=" + original + ", id=" + id
-        + ", namespace=" + namespace + ", version=" + version + "]";
+        + ", namespace=" + namespace + ", version=" + version + ", builtAt="
+        + builtAt + ", lastBuiltAt=" + lastBuiltAt + "]";
   }
+
+  
 
 }

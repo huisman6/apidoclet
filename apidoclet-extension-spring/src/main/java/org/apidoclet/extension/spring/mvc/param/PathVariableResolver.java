@@ -15,7 +15,7 @@ import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.Parameter;
 
 /**
- * PathParam解析
+ * PathParamResolver
  */
 public class PathVariableResolver implements PathParamResolver {
 
@@ -33,7 +33,7 @@ public class PathVariableResolver implements PathParamResolver {
             PathVariable.class.getName());
     Map<String, AnnotationValue> attributes =
         AnnotationUtils.attributesFor(pathVariable);
-    // 属性类型为基本类型包装类型以及字符串
+    //String annotation value 
     AnnotationValue pathAttr = attributes.get("value");
     String value = (pathAttr == null ? null : (String) pathAttr.getValue());
     PathParam param =

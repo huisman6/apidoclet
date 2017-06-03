@@ -18,14 +18,6 @@ import org.apidoclet.model.util.StandardDocTag;
 public class RestClass implements Serializable {
   private static final long serialVersionUID = 1L;
   /**
-   * doc 文档初次生成时间
-   */
-  private Date buildAt;
-  /**
-   * api文档最后一次生成时间
-   */
-  private Date lastBuildAt;
-  /**
    * 类功能简介，一般不超过20字，如果没有@summary tag，则会使用simpleClassName
    */
   private String summary;
@@ -103,22 +95,6 @@ public class RestClass implements Serializable {
     this.endpointMapping = endpointMapping;
   }
 
-  public Date getBuildAt() {
-    return buildAt;
-  }
-
-  public void setBuildAt(Date buildAt) {
-    this.buildAt = buildAt;
-  }
-
-  public Date getLastBuildAt() {
-    return lastBuildAt;
-  }
-
-  public void setLastBuildAt(Date lastBuildAt) {
-    this.lastBuildAt = lastBuildAt;
-  }
-
   public String getSummary() {
     return summary;
   }
@@ -188,7 +164,7 @@ public class RestClass implements Serializable {
   @Override
   public String toString() {
     final int maxLen = 90;
-    return "SpiClass [buildAt=" + buildAt + ", lastBuildAt=" + lastBuildAt+",endpointMapping="
+    return "SpiClass [endpointMapping="
         +endpointMapping+ ", summary=" + summary
         + ", deprecatedDate=" + deprecatedDate + ", deprecatedComment=" + deprecatedComment
         + ", description=" + description + ", className=" + className + ", packageName="

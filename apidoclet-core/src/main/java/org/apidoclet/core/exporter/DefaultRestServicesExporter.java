@@ -14,7 +14,13 @@ import org.apidoclet.model.RestServices;
 import com.alibaba.fastjson.JSON;
 
 /**
- * export the parsed doc to external server
+ * export the parsed {@link RestServices} to an external server
+ * 
+ * by default, we always attempt to export the parsed {@code RestServices} to
+ * URL-"http://localhost:8089/v1/apps/import"(local api-doclet server is running with port 8089 )
+ * for test, you can override the default export url by passing option :
+ * 
+ * -exportTo http://you-apidoclet-server-domain/v1/apps/import
  */
 public class DefaultRestServicesExporter implements RestServicesExporter {
   private static final String[] defaultExportUrls =

@@ -7,14 +7,13 @@ import org.apidoclet.model.RestClass;
 import org.apidoclet.model.RestClass.Method;
 
 /**
- * 合并类和方法上的RequestMapping
+ * merge RequestMapping on the class and method level
  */
 public class RequestMappingMethodPostProcessor implements RestClassMethodPostProcessor {
 
   @Override
   public void postProcess(Method method, RestClass restClass, ProcessorContext context) {
     if (restClass.getEndpointMapping() != null) {
-      // 将类上的映射信息，合并到方法上
       method.setMapping(restClass.getEndpointMapping().combine(method.getMapping()));
     }
     // check if web-context-path exists

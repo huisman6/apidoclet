@@ -6,7 +6,7 @@ import org.apidoclet.core.spi.exporter.RestServicesExporter;
 import org.apidoclet.core.spi.exporter.RestServicesPartitionStrategy;
 import org.apidoclet.core.spi.filter.RestClassMethodFilter;
 import org.apidoclet.core.spi.filter.RestClassMethodParamFilter;
-import org.apidoclet.core.spi.filter.RestServiceFilter;
+import org.apidoclet.core.spi.filter.RestClassFilter;
 import org.apidoclet.core.spi.filter.TypeFilter;
 import org.apidoclet.core.spi.http.HeaderParamResolver;
 import org.apidoclet.core.spi.http.HttpRequestBodyResolver;
@@ -24,64 +24,64 @@ import org.apidoclet.model.util.ServiceLoaderUtils;
 import com.sun.javadoc.RootDoc;
 
 /**
- * @summary Copyright (c) 2016, Lianjia Group All Rights Reserved.
+ * apidoclet builder
  */
-final class ApiDocletBuilder {
+/* non-public */final class ApiDocletBuilder {
   /**
-   * 命令行参数
+   * command line options
    */
   private ApiDocletOptions options;
   /**
-   * 判定哪些类提供Rest服务
+   * rest service filter
    */
-  private List<RestServiceFilter> restServiceFilters;
+  private List<RestClassFilter> restClassFilters;
 
   /**
-   * 判断并获取model的信息
+   * modelinfo provider
    */
   private List<ModelProvider> modelProviders;
 
   /**
-   * 哪些方法是rest接口
+   * RestMethod filter
    */
   private List<RestClassMethodFilter> restMethodFilters;
 
   /**
-   * 解析业务码
+   * BizCodes provider
    */
   private List<BizCodeProvider> bizCodeProviders;
 
   /**
-   * classdoc的类型信息
+   * javadoc type to TypeInfo converter
    */
   private List<TypeInfoProvider> typeInfoProviders;
 
   /**
-   * 忽略哪些类型
+   * ignored type filter
    */
   private List<TypeFilter> typeFilters;
 
   /**
-   * 路径映射信息
+   * endpoint mapping resolver
    */
   private List<EndpointMappingProvider> endpointMappingProviders;
 
   /**
-   * 服务接口导出到展示的地方
+   * exporter
    */
   private List<RestServicesExporter> restServicesExporters;
 
   /**
-   * 类上的后续处理
+   * class-level post processor
    */
   private List<RestClassPostProcessor> restClassPostProcessors;
   /**
-   * 接口方法的后续处理
+   * method-level post processor;
    */
   private List<RestClassMethodPostProcessor> restClassMethodPostProcessors;
 
   /**
-   * 服务的后续处理
+   * RestService post processor
    */
   private List<RestServicePostProcessor> restServicePostProcessors;
 
@@ -90,7 +90,7 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * ApiDoclet的启动选项
+   * parse command line options
    */
   ApiDocletBuilder options(RootDoc rootDoc) {
     this.options = ApiDocletOptions.readFromCommandLine(rootDoc);
@@ -98,18 +98,18 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 启用RestClass过滤机制
+   * enable RestService filters
    * 
    * @author huisman
    */
   ApiDocletBuilder enableRestServiceFilters() {
-    this.restServiceFilters =
-        ServiceLoaderUtils.getServicesOrNull(RestServiceFilter.class);
+    this.restClassFilters =
+        ServiceLoaderUtils.getServicesOrNull(RestClassFilter.class);
     return this;
   }
 
   /**
-   * 查找所有ModelProvider，用于过滤、收集model信息。
+   * enable customized model providers
    * 
    * @author huisman
    */
@@ -120,7 +120,7 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 获取所有可以提供业务吗
+   * enable customized BizCode providers
    * 
    * @author huisman
    */
@@ -131,7 +131,7 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 查找哪些方法是Rest接口，比如，对于SpringMVC项目来说，方法上有@RequestMapping和@ResponseBody才算Rest接口
+   * enable customized RestMethod filters
    * 
    * @author huisman
    */
@@ -142,7 +142,7 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 将一个classdoc的类型信息映射成我们的TypeInfo信息
+   * enable customized TypeInfo converters
    * 
    * @author huisman
    */
@@ -153,18 +153,17 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 判断是否可以忽略某些参数
+   * enable customized type filters
    * 
    * @author huisman
    */
   ApiDocletBuilder enableSkippedTypeFilters() {
-    this.typeFilters =
-        ServiceLoaderUtils.getServicesOrNull(TypeFilter.class);
+    this.typeFilters = ServiceLoaderUtils.getServicesOrNull(TypeFilter.class);
     return this;
   }
 
   /**
-   * 获取所有的解析RestMapping信息的实现类
+   * enable customized endpoint resolvers
    * 
    * @author huisman
    */
@@ -175,7 +174,7 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 解析后的数据导出
+   * enable customized exporters
    * 
    * @author huisman
    */
@@ -186,7 +185,7 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 方法的后续处理
+   * enable customized method level post processors
    * 
    * @author huisman
    */
@@ -198,7 +197,7 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 类的后续处理
+   * enable class-level post process
    * 
    * @author huisman
    */
@@ -209,7 +208,7 @@ final class ApiDocletBuilder {
   }
 
   /**
-   * 服务的后续处理
+   * enable service level post process
    * 
    * @author huisman
    */
@@ -219,20 +218,18 @@ final class ApiDocletBuilder {
     return this;
   }
 
-
-
+  /**
+   * construct a full-functional apidoclet
+   */
   ApiDoclet build() {
-    return new ApiDoclet(this.options, this.restServiceFilters,
+    return new ApiDoclet(this.options, this.restClassFilters,
         this.modelProviders, this.restMethodFilters, this.bizCodeProviders,
         this.typeInfoProviders, this.typeFilters,
         ServiceLoaderUtils.getServicesOrNull(RestClassMethodParamFilter.class),
         ServiceLoaderUtils.getServicesOrNull(HttpRequestBodyResolver.class),
-        ServiceLoaderUtils
-            .getServicesOrNull(QueryParamResolver.class),
-        ServiceLoaderUtils
-            .getServicesOrNull(PathParamResolver.class),
-        ServiceLoaderUtils
-            .getServicesOrNull(HeaderParamResolver.class),
+        ServiceLoaderUtils.getServicesOrNull(QueryParamResolver.class),
+        ServiceLoaderUtils.getServicesOrNull(PathParamResolver.class),
+        ServiceLoaderUtils.getServicesOrNull(HeaderParamResolver.class),
         this.endpointMappingProviders, this.restServicesExporters,
         this.restClassMethodPostProcessors, this.restClassPostProcessors,
         this.restServicePostProcessors,

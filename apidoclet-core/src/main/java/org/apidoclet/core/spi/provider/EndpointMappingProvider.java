@@ -11,12 +11,13 @@ import com.sun.javadoc.SourcePosition;
  */
 public interface EndpointMappingProvider {
   /**
-    * 解析Rest接口的映射信息 
-    * @author huisman
-    * @param annotationDescs 方法或类上的标注信息
-    * @param options 命令选项
-    * @param position 源代码的位置，方便打印错误信息
+   * 解析Rest接口的映射信息
+   * 
+   * @author huisman
+   * @param annotationDescs 方法或类上的标注信息
+   * @param options 命令选项
+   * @param position 源代码的位置，方便打印错误信息
    */
-  EndpointMapping produce(AnnotationDesc[] classOrMethodAnnotationDescs, ApiDocletOptions options,
-      SourcePosition position);
+  EndpointMapping produce(AnnotationDesc[] classOrMethodAnnotationDescs,
+      ApiDocletOptions options, SourcePosition position);
 }

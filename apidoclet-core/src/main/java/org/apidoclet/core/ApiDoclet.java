@@ -25,7 +25,7 @@ import org.apidoclet.core.spi.exporter.RestServicesExporter;
 import org.apidoclet.core.spi.exporter.RestServicesPartitionStrategy;
 import org.apidoclet.core.spi.filter.RestClassMethodFilter;
 import org.apidoclet.core.spi.filter.RestClassMethodParamFilter;
-import org.apidoclet.core.spi.filter.RestServiceFilter;
+import org.apidoclet.core.spi.filter.RestClassFilter;
 import org.apidoclet.core.spi.filter.TypeFilter;
 import org.apidoclet.core.spi.http.HeaderParamResolver;
 import org.apidoclet.core.spi.http.HttpRequestBodyResolver;
@@ -81,7 +81,7 @@ import com.sun.javadoc.Type;
  * the customized java doc doclet,responsible for organizing all extension SPI components that are
  * used to analysis java source code
  */
-class ApiDoclet {
+/*non-public*/class ApiDoclet {
   /**
    * apidoclet command line options, an option must be start with prefix '-'. eg: -exportTo , -app
    */
@@ -89,7 +89,7 @@ class ApiDoclet {
   /**
    * filters that use to determine whether a class contains any endpoint or not
    */
-  private List<RestServiceFilter> restServiceFilters;
+  private List<RestClassFilter> restClassFilters;
 
   /**
    * parse and provide model(-view-controller) info
@@ -201,7 +201,7 @@ class ApiDoclet {
   private EnumProvider enumProvider = new EnumProvider();
   /**
    * default {@code RestClass} provider,responsible for parsing javadoc tags and annotations on the
-   * eligible (filtered by {@code RestServiceFilter}) class .
+   * eligible (filtered by {@code RestClassFilter}) class .
    */
   private RestClassProvider restClassProvider = new RestClassProvider();
   /**
@@ -212,7 +212,7 @@ class ApiDoclet {
   private RestServiceResovler restServiceResovler = new RestServiceResovler();
 
   ApiDoclet(ApiDocletOptions options,
-      List<RestServiceFilter> restServiceFilters,
+      List<RestClassFilter> restClassFilters,
       List<ModelProvider> modelProviders,
       List<RestClassMethodFilter> restMethodFilters,
       List<BizCodeProvider> bizCodeProviders,
@@ -230,7 +230,7 @@ class ApiDoclet {
       List<RestServicesPartitionStrategy> restServicesPartitionStrategies) {
     super();
     this.options = options;
-    this.restServiceFilters = restServiceFilters;
+    this.restClassFilters = restClassFilters;
     this.modelProviders = modelProviders;
     this.restMethodFilters = restMethodFilters;
     this.bizCodeProviders = bizCodeProviders;
@@ -328,25 +328,24 @@ class ApiDoclet {
    */
   private String filterRestClassAndGetServiceName(ClassDoc classDoc) {
     String serviceName = null;
-    if (this.restServiceFilters == null || this.restServiceFilters.isEmpty()) {
-      serviceName = deduceApp(this.options);
-    } else {
-      for (RestServiceFilter filter : this.restServiceFilters) {
+    if (this.restClassFilters != null && this.restClassFilters.size() > 0) {
+      for (RestClassFilter filter : this.restClassFilters) {
         if (filter.accept(classDoc, this.options)) {
-          serviceName = filter.getServiceName(classDoc, this.options);
+          serviceName = filter.getServiceIdIfAny(classDoc, this.options);
           if (!StringUtils.isNullOrEmpty(serviceName)) {
             return serviceName;
           }
         }
       }
     }
-    return serviceName;
+    //fallback
+    return deduceServiceId(this.options);
   }
 
   /**
    * deduce the default RestService via apidoclet options
    */
-  private String deduceApp(ApiDocletOptions options) {
+  private String deduceServiceId(ApiDocletOptions options) {
     // first check whether "-app" option exists?
     if (!StringUtils.isNullOrEmpty(options.getApp())) {
       return options.getApp();
@@ -541,7 +540,7 @@ class ApiDoclet {
       return false;
     }
     for (RestClassMethodParamFilter filter : this.restClassMethodParamFilters) {
-      if (filter.shouldSkipped(parameter, this.options)) {
+      if (filter.shouldSkip(parameter, this.options)) {
         options.getDocReporter().printNotice(
             "ignored parameter:" + parameter.name());
         return true;
@@ -873,10 +872,8 @@ class ApiDoclet {
         processor.postProcess(restApp, context);
       }
     }
-    restApp.setBuildAt(new Date());
-    restApp.setLastBuildAt(new Date());
     restApp.setBuildBy(context.getOpitons().getBuildBy());
-    restApp.setBuildIpAddress(context.getOpitons().getBuildIpAddress());
+    restApp.setIpAddress(context.getOpitons().getIpAddress());
     // artifact info
     restApp.setArtifact(this.resolveArtifactIfAny(context.getOpitons()));
   }
@@ -1018,7 +1015,7 @@ class ApiDoclet {
       if (StringUtils.isNullOrEmpty(serviceName)) {
         return;
       }
-      // deduce service identity
+      // deduce service's web-ui display name
       String providedAppName =
           options.optionValue(ApiDocletOptions.DEFAULT_PREFIX + serviceName);
       if (StringUtils.isNullOrEmpty(providedAppName)) {

@@ -19,7 +19,7 @@ import com.sun.javadoc.MethodDoc;
 import com.sun.javadoc.Tag;
 
 /**
- * Copyright (c) 2017, Lianjia Group All Rights Reserved.
+ * resolve the {@link BizCode} from {@code @BizCodes} javadoc tag
  */
 public class DefaultBizCodeProvider implements BizCodeProvider {
   private static final String DEFAULT_METHOD_DELIMITER = "#";
@@ -91,7 +91,7 @@ public class DefaultBizCodeProvider implements BizCodeProvider {
           bizCode.setDeclaredClass(clazz.getName());
           bizCode.setName(segments[1]);
 
-          // public doc
+          // public fields 
           for (FieldDoc fieldDoc : bizClass.fields()) {
             // field name
             if (segments[1].equals(fieldDoc.name())) {

@@ -2,6 +2,7 @@ package org.apidoclet.server.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,14 @@ public class VersionGroupedRestClass implements Serializable {
    */
   private String app;
   /**
+   * first built date
+   */
+  private Date builtAt;
+  /**
+   * last built date
+   */
+  private Date lastBuiltAt;
+  /**
    * version => methods
    */
   private Map<String, List<VersionedRestMethod>> methodMap = new HashMap<>();
@@ -49,6 +58,8 @@ public class VersionGroupedRestClass implements Serializable {
     }
     this.app = app;
     this.original = original;
+    this.builtAt=new Date();
+    this.lastBuiltAt=new Date();
     this.id = String.valueOf(DigestUtils.crc32(this.app + original.getClassName()));
 
     List<RestClass.Method> restMethods = original.getMethods();
@@ -84,6 +95,22 @@ public class VersionGroupedRestClass implements Serializable {
 
   public void setOriginal(RestClass original) {
     this.original = original;
+  }
+
+  public Date getBuiltAt() {
+    return builtAt;
+  }
+
+  public void setBuiltAt(Date builtAt) {
+    this.builtAt = builtAt;
+  }
+
+  public Date getLastBuiltAt() {
+    return lastBuiltAt;
+  }
+
+  public void setLastBuiltAt(Date lastBuiltAt) {
+    this.lastBuiltAt = lastBuiltAt;
   }
 
   /**

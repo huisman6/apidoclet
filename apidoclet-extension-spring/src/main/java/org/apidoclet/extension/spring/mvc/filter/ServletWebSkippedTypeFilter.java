@@ -8,7 +8,7 @@ import org.apidoclet.core.ApiDocletOptions;
 import org.apidoclet.core.spi.filter.TypeFilter;
 
 /**
- * 忽略Rest接口中的一些参数,比如 HttpServletRequest
+ * ignored types
  */
 public class ServletWebSkippedTypeFilter implements TypeFilter {
   private Set<String> ignoredTypes = new HashSet<>(Arrays.asList(

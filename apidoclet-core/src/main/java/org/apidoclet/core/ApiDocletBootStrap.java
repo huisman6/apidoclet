@@ -27,25 +27,23 @@ import com.sun.javadoc.RootDoc;
 public final class ApiDocletBootStrap {
 
   /**
-   * command line option，必须有此方法。 我们支持：-classdir<br/>
-   * javadoc自动调用以决定命令行option加上option的参数值的总长度。<br/>
-   * (每个option可能有值，也可能无值，javadoc会把选项放在一个二维数组里，返回值可以用来设置第二维数组的长度）
-   * 
-   * @author huisman
-   * @param option
-   * @since 2016年1月16日
+   * a callback function for javadoc program which is used to determine an command line option's
+   * length
    */
   public static int optionLength(String option) {
     return ApiDocletOptions.optionLength(option);
   }
 
   /**
-   * javadoc 自动调用以验证option是否符合需要。
+   * a callback function for javadoc program which is used to validate the parsed command line
+   * options
    * 
    * @param options
    * @param reporter
    */
-  public static boolean validOptions(String options[][], DocErrorReporter reporter) {
+  public static boolean validOptions(String options[][],
+      DocErrorReporter reporter) {
+    // allow everything
     return true;
   }
 
@@ -61,7 +59,7 @@ public final class ApiDocletBootStrap {
 
 
   /**
-   * javadoc解析完源代码之后，会回调此方法
+   * javadoc doclet entry-point
    * 
    * @param rootDoc rootDoc
    * @return true
@@ -69,29 +67,29 @@ public final class ApiDocletBootStrap {
   public static boolean start(RootDoc rootDoc) {
     ApiDocletBuilder builder = new ApiDocletBuilder();
     ApiDoclet apiDoclet = builder.
-    // 业务码的解析
+    // bizcode resolvers
         enableBizCodeProviders().
-        // model 解析
+        // model resolver ,not necessary
         enableModelProviders().
-        // 方法过滤
+        // restmethod filters
         enableRestMethodFilters().
-        // rest服务类的过滤
+        // restservice filters
         enableRestServiceFilters().
-        // 类型过滤
+        // Type filters
         enableSkippedTypeFilters().
-        // 将javadoc 的Type转换为TypeInfo
+        // Type converters
         enableTypeInfoProviders()
-        // request mapping信息的解析
+        // http endpoint mapping resolvers
         .enableEndpointMappingProviders()
-        // 方法级别的后续处理
+        // method level post processors
         .enableRestClassMethodPostProcessors()
-        // 类的后续处理
+        // class level post processors
         .enableRestClassPostProcessors()
-        // 微服务的后续处理
+        // service level post processors
         .enableRestServicePostProcessors()
-        // 命令行启动参数
+        // command line options
         .options(rootDoc)
-        // 解析后的数据导出
+        // service exporters
         .enableRestServicesExports().build();
     return apiDoclet.startParseSourceCodes(rootDoc);
   }

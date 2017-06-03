@@ -19,7 +19,25 @@ import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.RootDoc;
 
 /**
- * api doclet command-line options
+ * apidoclet command-line options,an option must be start with prefix {@code #DEFAULT_PREFIX}.
+ * moreover,an option only can have one option value (similar to Map), if an option value contains
+ * non-alphabetic character,you should enclose it in double quotation marks. </p>
+ * 
+ * e.g: </p>
+ * 
+ * -webCotext /petstore </p>
+ * 
+ * -exportTo http://localhsot:8089/v1/apps/import </p>
+ * 
+ * -print </p>
+ * 
+ * -app pet-store</p>
+ * 
+ * -appName PetStoreService </p>
+ * 
+ * -version v1</p>
+ * 
+ * -projectRootDir "/Home/huisman/api test"</p>
  * 
  * @author huisman
  */
@@ -31,14 +49,14 @@ public class ApiDocletOptions {
       Arrays.asList(ApiDocletOptions.CLASS_DIR, ApiDocletOptions.VERSION,
           ApiDocletOptions.ARTIFACT_ID, ApiDocletOptions.ARTIFACT_VERSION,
           ApiDocletOptions.ARTIFACT_GROUP_ID, ApiDocletOptions.APP_NAME,
-          ApiDocletOptions.APP, ApiDocletOptions.EXPORT_TO, ApiDocletOptions.WEB_CONTEXT_PATH));
+          ApiDocletOptions.APP, ApiDocletOptions.EXPORT_TO,
+          ApiDocletOptions.WEB_CONTEXT_PATH));
 
   /**
    * option length = 1 , only have one option key
    */
   private static final Set<String> SUPPORT_OPTIONS_LEN1 = new HashSet<String>(
-      Arrays.asList(ApiDocletOptions.PRINT,
-          ApiDocletOptions.IGNORE_VIRTUAL_PATH));
+      Arrays.asList(ApiDocletOptions.PRINT));
 
   /**
    * the default value delimiter that use to split an option value
@@ -51,21 +69,21 @@ public class ApiDocletOptions {
   public static final String DEFAULT_PREFIX = "-";
 
   /**
-   * indicates print the parsed doc to console
+   * indicates whether we want to print the parsed RestServcie to console
    */
   public static final String PRINT = DEFAULT_PREFIX + "print";
 
   /**
-   * compiled classes output directory path, apidoclet classloader use it to find class file
+   * the compiled classes output directory path, apidoclet classloader use it to find a class file
    */
   public static final String CLASS_DIR = DEFAULT_PREFIX + "classdir";
   /**
-   * default rest api version
+   * default api version
    */
   public static final String VERSION = DEFAULT_PREFIX + "version";
 
   /**
-   * web application's context path,prepend it to request path
+   * web application's context path,if exists,we automatic prepend it to the request path
    */
   public static final String WEB_CONTEXT_PATH = DEFAULT_PREFIX + "webContext";
 
@@ -92,11 +110,6 @@ public class ApiDocletOptions {
   public static final String ARTIFACT_VERSION = DEFAULT_PREFIX
       + "artifactVersion";
 
-  /**
-   * 是否忽略虚拟路径
-   */
-  public static final String IGNORE_VIRTUAL_PATH = DEFAULT_PREFIX
-      + "ignoreVirtualPath";
   /**
    * source java file directory
    */
@@ -126,15 +139,18 @@ public class ApiDocletOptions {
    */
   private ClassLoader apidocletClassLoader = null;
   /**
-   * compiled classes output directory, apidoclet classloader use it to locate a class file if necessary
+   * the compiled classes output directory, apidoclet classloader use it to locate a class file if
+   * necessary
+   * 
+   * in MAVEN environment, it would be ${projectRootDir}/target/classes
    */
   private String classdir;
   /**
-   * where should we export our parsed doc to
+   * where should we export our parsed RestServcies to
    */
   private String exportTo;
   /**
-   * service global identify
+   * could be spring.application.name or FeignClient#name, global service identifier
    */
   private String app;
   /**
@@ -142,20 +158,16 @@ public class ApiDocletOptions {
    */
   private String appName;
   /**
-   * 是否忽略虚拟路径
+   * the operator computer's IP address
    */
-  private boolean ignoreVirtualPath;
-  /**
-   * IP address
-   */
-  private String buildIpAddress;
+  private String ipAddress;
   /**
    * who build
    */
   private String buildBy;
 
   /**
-   * whether output the parsed doc to console or not
+   * whether should we output the parsed RestServcies to console or not?
    */
   private boolean print = false;
 
@@ -192,12 +204,12 @@ public class ApiDocletOptions {
    * 
    * @author huisman
    */
-  public String getBuildIpAddress() {
-    return buildIpAddress;
+  public String getIpAddress() {
+    return ipAddress;
   }
 
   /**
-   * 被谁构建
+   * who build?
    * 
    * @author huisman
    */
@@ -206,19 +218,9 @@ public class ApiDocletOptions {
   }
 
   /**
-   * 是否忽略虚拟路径，如果不忽略虚拟路径，生成api接口地址的时候会自动把应用的app添加到path前。<br/>
-   * 比如，某个应用的app：users，接口路径为：/v1/friends/{userId}，如果ignoreVirtualPath=false，<br/>
-   * 最终文档的接口地址为：/users/v1/friends/{userId},如果ignoreVirtualPath=true,则文档中接口地址为：/v1/friends/{userId}
-   */
-  public boolean isIgnoreVirtualPath() {
-    return ignoreVirtualPath;
-  }
-
-  /**
-   * 获取特定选项的值
+   * get option value by its key,may be null
    * 
    * @author huisman
-   * @version v1
    */
   public String optionValue(String key) {
     return this.othersOptions.get(key);
@@ -235,7 +237,7 @@ public class ApiDocletOptions {
 
 
   /**
-   * 主要用于javadoc执行过程中打印错误信息
+   * similar to logger
    */
   private DocErrorReporter docReporter;
 
@@ -321,8 +323,7 @@ public class ApiDocletOptions {
   @Override
   public String toString() {
     return "ApiDocletOptions [classdir=" + classdir + ", exportTo=" + exportTo
-        + ", app=" + app + ", appName=" + appName + ", ignoreVirtualPath="
-        + ignoreVirtualPath + ", buildIpAddress=" + buildIpAddress
+        + ", app=" + app + ", appName=" + appName + ", ipAddress=" + ipAddress
         + ", buildBy=" + buildBy + ", print=" + print + ", version=" + version
         + "]";
   }
@@ -343,14 +344,13 @@ public class ApiDocletOptions {
   }
 
   /**
-   * 从命令参数里读取我们需要的选项信息
+   * parse command line options
    * 
    * @author huisman
    */
   public static ApiDocletOptions readFromCommandLine(RootDoc rootDoc) {
     rootDoc.printNotice("available options：");
-
-    // 程序启动参数
+    // command line optons
     String[][] options = rootDoc.options();
     ApiDocletOptions apiDocletOptions = new ApiDocletOptions();
     Map<String, String> otherOptions = new HashMap<>();
@@ -365,11 +365,6 @@ public class ApiDocletOptions {
 
       rootDoc.printNotice(Arrays.toString(options[i]));
 
-      if (input.length == 1) {
-        otherOptions.put(options[i][0], null);
-      } else {
-        otherOptions.put(options[i][0], options[i][1]);
-      }
       switch (options[i][0]) {
         case ApiDocletOptions.WEB_CONTEXT_PATH:
           apiDocletOptions.webCotextPath = StringUtils.trim(options[i][1]);
@@ -398,9 +393,13 @@ public class ApiDocletOptions {
         case ApiDocletOptions.PRINT:
           apiDocletOptions.print = (true);
           break;
-        case ApiDocletOptions.IGNORE_VIRTUAL_PATH:
-          apiDocletOptions.ignoreVirtualPath = (true);
         default:
+          // non-standard options
+          if (input.length == 1) {
+            otherOptions.put(options[i][0], null);
+          } else {
+            otherOptions.put(options[i][0], options[i][1]);
+          }
           break;
       }
     }
@@ -410,8 +409,9 @@ public class ApiDocletOptions {
     String ipAddress = "unknown";
     try {
       ipAddress = InetAddress.getLocalHost().getHostAddress();
-    } catch (Exception e) {}
-    apiDocletOptions.buildIpAddress =
+    } catch (Exception e) {
+    }
+    apiDocletOptions.ipAddress =
         (ipAddress + " " + System.getProperty("os.name"));
 
     // fall back to current directory
@@ -420,10 +420,9 @@ public class ApiDocletOptions {
     }
 
     apiDocletOptions.docReporter = (rootDoc);
-    // 不可修改
+    // un-modified
     apiDocletOptions.othersOptions = Collections.unmodifiableMap(otherOptions);
-
-    // 默认classes加载器，如果我们需要加载类
+    // default apidoclet classloader
     String classdir = apiDocletOptions.classdir;
 
     apiDocletOptions.apidocletClassLoader =
@@ -433,20 +432,22 @@ public class ApiDocletOptions {
 
 
   /**
-   * command line option，必须有此方法。 我们支持：-classdir<br/>
-   * javadoc自动调用以决定命令行option加上option的参数值的总长度。<br/>
-   * (每个option可能有值，也可能无值，javadoc会把选项放在一个二维数组里，返回值可以用来设置第二维数组的长度）
-   * 
-   * @author huisman
+   *  supported option's length
    */
   public static int optionLength(String option) {
     if (SUPPORT_OPTIONS_LEN2.contains(option)) {
-      // 表示-classdir option只有一个值（-classdir 后紧跟的字符串)，总共2个元素
+      // e.g -classdir ./target/classes, an option key "-classdir" followed by an option value "./target/classes"
+      // we called this option's length equals two;
       return 2;
     } else if (SUPPORT_OPTIONS_LEN1.contains(option)) {
+      //e.g -print , only has an option key without option value
+      //we called this option's length equals one
       return 1;
     }
-    // 0 不支持其他option,2默认都是key value
+    // 0 indicates that we don't support this option at all, javadoc program will exit if
+    // option's length equal's zero
+    
+    // default length 
     return 2;
   }
 

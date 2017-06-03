@@ -44,12 +44,10 @@ public class VersionedRestApps implements Serializable {
    * merge app
    */
   private void mergeRestApp(VersionedRestApp newApp, VersionedRestApp oldApp) {
-    RestService newOriginal = newApp.getOriginal();
-    RestService oldOriginal = oldApp.getOriginal();
-    // update last build at
-    newOriginal.setLastBuildAt(newOriginal.getBuildAt());
-    // remain first build at
-    newOriginal.setBuildAt(oldOriginal.getBuildAt());
+    // update last builtAt
+    newApp.setLastBuiltAt(newApp.getBuiltAt());
+    // remain first builtAt
+    newApp.setBuiltAt(oldApp.getBuiltAt());
 
     Map<String, VersionGroupedRestClass> oldRestClassMap =
         oldApp.getIdToSpiClassMap();
@@ -69,10 +67,8 @@ public class VersionedRestApps implements Serializable {
       }
       VersionGroupedRestClass newRestClass = newRestClassMap.get(restClassId);
       // exits? update build at
-      newRestClass.getOriginal().setLastBuildAt(
-          newRestClass.getOriginal().getBuildAt());
-      newRestClass.getOriginal().setBuildAt(
-          oldRestClass.getOriginal().getBuildAt());
+      newRestClass.setLastBuiltAt(newRestClass.getBuiltAt());
+      newRestClass.setBuiltAt(oldRestClass.getBuiltAt());
 
       // merge methods
       mergeSpiMethod(newRestClass, oldRestClass);
@@ -85,7 +81,7 @@ public class VersionedRestApps implements Serializable {
    */
   private void mergeSpiMethod(VersionGroupedRestClass newRestClass,
       VersionGroupedRestClass oldRestClass) {
-    // 检查方法的since 等
+    // check @since tag etc
     Map<String, List<VersionedRestMethod>> newMethodMap =
         newRestClass.getMethodMap();
     if (newMethodMap == null || newMethodMap.isEmpty()) {
@@ -98,6 +94,8 @@ public class VersionedRestApps implements Serializable {
           VersionedRestMethod oldMethod =
               oldRestClass.getMethod(newMethod.getId());
           if (oldMethod != null) {
+            newMethod.setLastBuiltAt(newMethod.getBuiltAt());
+            newMethod.setBuiltAt(oldMethod.getBuiltAt());
             // since not set?
             if (StringUtils.hasText(oldMethod.getOriginal().getSince())) {
               newMethod.getOriginal().setSince(

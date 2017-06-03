@@ -62,7 +62,7 @@ public class PostManCollectionHelper {
         .hashString(restApp.getOriginal().getApp(), StandardCharsets.UTF_8)
         .toString());
     postManMain.setOwner(restApp.getOriginal().getApp());
-    postManMain.setTimestam(restApp.getOriginal().getBuildAt().getTime());
+    postManMain.setTimestam(restApp.getLastBuiltAt().getTime());
     postManMain.setOrder(new String[] {});
     return postManMain;
   }

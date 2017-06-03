@@ -17,12 +17,11 @@ import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.Tag;
 
 /**
- * resolve rest class basic metadata、java comment 、annotations
+ * parse the common metadata/javadoc tags/annotations of rest class 
  */
 public final class RestClassProvider {
   public RestClass produce(ClassDoc classDoc, ApiDocletOptions options) {
     RestClass spiClass = new RestClass();
-    spiClass.setBuildAt(new Date());
     String className = classDoc.qualifiedTypeName();
     String packageName = className.substring(0, className.lastIndexOf("."));
     // className,package info

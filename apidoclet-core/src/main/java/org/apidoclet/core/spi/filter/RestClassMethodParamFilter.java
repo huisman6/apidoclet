@@ -17,6 +17,6 @@ public interface RestClassMethodParamFilter {
     * @param options API Doc命令行参数
     * @since 2016年9月24日
    */
-  boolean shouldSkipped(Parameter parameter, ApiDocletOptions options);
+  boolean shouldSkip(Parameter parameter, ApiDocletOptions options);
 
 }

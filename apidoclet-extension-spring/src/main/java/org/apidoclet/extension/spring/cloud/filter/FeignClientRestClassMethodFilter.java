@@ -10,14 +10,14 @@ import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.MethodDoc;
 
 /**
- * 过滤FeignClient方法
+ *  spring-cloud-netflix {@code FeignClient} method support
  */
 public class FeignClientRestClassMethodFilter implements RestClassMethodFilter {
 
   @Override
   public boolean accept(MethodDoc methodDoc, ApiDocletOptions options) {
     ClassDoc spiClass = methodDoc.containingClass();
-    // 如果是Controller，则检查方法上是否有ResponseBody
+    // check if @RequestMapping exists
     boolean hasRequestMappingOnMethod =
         AnnotationUtils.isPresent(methodDoc.annotations(), RequestMapping.class.getName());;
     if (!hasRequestMappingOnMethod) {

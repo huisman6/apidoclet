@@ -6,6 +6,9 @@ import org.apidoclet.model.EnumInfo;
 
 import com.sun.javadoc.ClassDoc;
 
+/**
+ * convert javadoc Enum to {@link EnumInfo}
+ */
 public final  class EnumProvider {
   public boolean accept(ClassDoc classDoc, ApiDocletOptions options) {
     return classDoc.isEnum();

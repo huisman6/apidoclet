@@ -29,7 +29,7 @@
 			th:class="${app.id == currentApp.id ? 'active' : ''}"><i
 				class="triangle"></i><span th:text="${app.original.appName}"></span>
 				<span class="app_buildAt"
-				th:text="${#dates.format(app.original.lastBuildAt, 'yyyy-MM-dd')}"></span> </a>
+				th:text="${#dates.format(app.lastBuiltAt, 'yyyy-MM-dd')}"></span> </a>
 			<ol class="son"
 				th:style="${app.id == currentApp.id ? '' : 'display: none;'}">
 				<li><a th:title="'export'+${app.original.appName}+'to Postman'"

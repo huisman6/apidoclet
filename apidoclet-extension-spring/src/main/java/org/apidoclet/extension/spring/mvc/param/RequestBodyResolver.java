@@ -13,7 +13,7 @@ import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.Parameter;
 
 /**
- * parsing requestBody
+ * RequestBody resolver
  */
 public class RequestBodyResolver implements HttpRequestBodyResolver {
 
@@ -32,7 +32,7 @@ public class RequestBodyResolver implements HttpRequestBodyResolver {
             RequestBody.class.getName());
     Map<String, AnnotationValue> attributes =
         AnnotationUtils.attributesFor(pathVariable);
-    // 属性类型为基本类型包装类型以及字符串
+    // Boolean annotation value
     AnnotationValue requiredAttr = attributes.get("required");
     Boolean required =
         (requiredAttr == null ? null : (Boolean) requiredAttr.getValue());

@@ -1,2 +1,0 @@
-org.apidoclet.extension.spring.mvc.filter.RestControllerRestServiceFilter
-org.apidoclet.extension.spring.cloud.filter.FeignClientRestServiceFilter

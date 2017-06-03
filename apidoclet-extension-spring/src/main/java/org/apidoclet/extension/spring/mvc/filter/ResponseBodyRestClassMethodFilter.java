@@ -12,22 +12,24 @@ import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.MethodDoc;
 
 /**
- * 对于SpringMVC来说，只有方法包含@ResponseEntity，才算数据接口
+ *  * Spring-Web-MVC Controller method support
  */
 public class ResponseBodyRestClassMethodFilter implements RestClassMethodFilter {
 
   @Override
   public boolean accept(MethodDoc methodDoc, ApiDocletOptions options) {
     ClassDoc spiClass = methodDoc.containingClass();
-    // 如果是Controller，则检查方法上是否有ResponseBody
+    // first , check if @RequestMapping exsits
     boolean hasRequestMappingOnMethod =
         AnnotationUtils.isPresent(methodDoc.annotations(), RequestMapping.class.getName());;
    if (!hasRequestMappingOnMethod) {
       return false;
     }
     if (AnnotationUtils.isPresent(spiClass.annotations(), Controller.class.getName())) {
+      //if @Controller annotation exists, double check if @ResponseBody annotation presents on this method
       return AnnotationUtils.isPresent(methodDoc.annotations(), ResponseBody.class.getName());
     } else if (AnnotationUtils.isPresent(spiClass.annotations(), RestController.class.getName())) {
+      //@RestController annotation exists
       return true;
     }
     return false;
