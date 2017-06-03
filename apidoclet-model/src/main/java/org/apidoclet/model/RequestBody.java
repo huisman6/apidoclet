@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 /**
  * Http Request Entity, similar to SpringMVC {@code @RequestBody} 
- * Copyright (c) 2017, Lianjia Group All Rights Reserved.
  */
 public class RequestBody implements Serializable {
   private static final long serialVersionUID = 1L;

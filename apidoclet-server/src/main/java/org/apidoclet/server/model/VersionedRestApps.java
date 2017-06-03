@@ -12,7 +12,7 @@ import org.springframework.util.StringUtils;
 
 public class VersionedRestApps implements Serializable {
   private static final long serialVersionUID = 1L;
-  // default sort by import order
+  // default sort by imported order
   private Map<String, VersionedRestApp> restAppMap = new LinkedHashMap<>();
 
   public VersionedRestApps() {
