@@ -1,4 +1,4 @@
-package org.apidoclet.server.utils;
+package org.apidoclet.server.util;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;

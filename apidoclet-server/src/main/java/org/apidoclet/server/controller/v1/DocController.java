@@ -18,7 +18,7 @@ import org.apidoclet.server.model.VersionGroupedRestClass;
 import org.apidoclet.server.model.VersionedRestApp;
 import org.apidoclet.server.model.VersionedRestMethod;
 import org.apidoclet.server.service.VersionGroupedAppService;
-import org.apidoclet.server.utils.DynamicBeanCreator;
+import org.apidoclet.server.util.DynamicBeanCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
