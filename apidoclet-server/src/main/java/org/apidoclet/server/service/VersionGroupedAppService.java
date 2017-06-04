@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * @author huisman
@@ -89,6 +90,7 @@ public class VersionGroupedAppService implements InitializingBean {
          .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
          .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
          .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+     this.appSerializeObjectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS,false);
      //ignore unknown fields
      this.appSerializeObjectMapper
      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

@@ -42,7 +42,7 @@ public final class ClassUtils {
   private static final int IS_PREFIX_LEN = IS_PREFIX.length();
 
   /**
-   *  additional java field comment providers ,may be null
+   * additional java field comment providers ,may be null
    */
   private static List<JavaDocCommentProvider> commentProviders =
       ServiceLoaderUtils.getServicesOrNull(JavaDocCommentProvider.class);
@@ -158,10 +158,8 @@ public final class ClassUtils {
       if (fd.isStatic()) {
         continue;
       }
-      fieldCommentMap.put(
-          fd.name(),
-          getProvidedCommentOrDefault(classDoc, fd.name(),
-              fd.commentText()));
+      fieldCommentMap.put(fd.name(),
+          getProvidedCommentOrDefault(classDoc, fd.name(), fd.commentText()));
     }
     // public getter
     for (MethodDoc methodDoc : methodDocs) {
@@ -207,9 +205,7 @@ public final class ClassUtils {
       fieldInfo.setDeclaredClass(methodDoc.containingClass().qualifiedName());
       // 注释优先取外部配置的，
       // 其次取方法上的注释，其次是字段上的
-      String comment =
-          getProvidedCommentOrDefault(classDoc, fieldName,
-              null);
+      String comment = getProvidedCommentOrDefault(classDoc, fieldName, null);
       if (StringUtils.isNullOrEmpty(comment)) {
         comment = StringUtils.trim(methodDoc.commentText());
       }
@@ -283,7 +279,7 @@ public final class ClassUtils {
       type.setArray(true);
       // 判断是否是简单类型，如果是简单类型，我们不解析field信息
       String qt = elementType.qualifiedTypeName();
-      if (!Types.isSimpleType(qt)) {
+      if (Types.isJavaBean(qt)) {
         type.setFields(getFieldInfos(elementType.asClassDoc(),
             providedActualType));
       }
@@ -298,21 +294,24 @@ public final class ClassUtils {
       // 简单类型，设置字段类型
       ClassDoc cd = elementType.asClassDoc();
       String qt = elementType.qualifiedTypeName();
-      if (!Types.isSimpleType(qt)) {
-        type.setFields(getFieldInfos(cd, providedActualType));
+      if (void.class.getName().equals(qt)) {
+        type.setVoid(true);
+      } else {
+        if (Types.isJavaBean(qt)) {
+          type.setFields(getFieldInfos(cd, providedActualType));
+        }
       }
       type.setActualType(qt);
       type.setContainerType(qt);
       type.setEnum(cd.isEnum());
     } else if (elementType.isPrimitive()) {
-      // 原始类型 int,char
+      // primitive type
       type.setActualType(elementType.qualifiedTypeName());
       type.setContainerType(elementType.qualifiedTypeName());
     } else if (elementType instanceof ParameterizedType) {
-      // 泛型
+      // generic type
       ParameterizedType pt = elementType.asParameterizedType();
       String ptTypeName = pt.qualifiedTypeName();
-
       if (Types.isCollectionType(elementType.qualifiedTypeName())) {
         type.setCollection(true);
       } else if (Types.isMap(elementType.qualifiedTypeName())) {
@@ -349,7 +348,7 @@ public final class ClassUtils {
           }
           type.setActualType(providedActualType);
         } else {
-          if (!Types.isSimpleType(actualClass.qualifiedTypeName())) {
+          if (Types.isJavaBean(actualClass.qualifiedTypeName())) {
             type.setFields(getFieldInfos(actualClass, providedActualType));
           }
           type.setActualType(actualClass.qualifiedTypeName());
@@ -371,7 +370,7 @@ public final class ClassUtils {
             : providedActualType);
       } else {
         type.setActualType(actualType.qualifiedTypeName());
-        if (!Types.isSimpleType(actualType.qualifiedTypeName())) {
+        if (Types.isJavaBean(actualType.qualifiedTypeName())) {
           type.setFields(getFieldInfos(actualType, providedActualType));
         }
       }

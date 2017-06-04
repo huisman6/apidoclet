@@ -19,6 +19,11 @@ public class TypeInfo implements Serializable {
    * 是否是集合
    */
   private boolean isCollection;
+  
+  /**
+   * 是否是void类型
+   */
+  private boolean isVoid;
 
   /**
    * 是否是枚举
@@ -64,6 +69,18 @@ public class TypeInfo implements Serializable {
   public TypeInfo() {
     super();
   }
+
+  public boolean isVoid() {
+    return isVoid;
+  }
+
+
+
+  public void setVoid(boolean isVoid) {
+    this.isVoid = isVoid;
+  }
+
+
 
   public boolean isArray() {
     return isArray;

@@ -172,9 +172,9 @@
 								<td colspan="4">
 									<div class="list list1">
 										<ul th:class="${iterStat.odd} ? ' tr' :'tr even'"
-											th:classappend="${!field.type.enum and #lists.isEmpty(field.nestedFields) ? '' : 'parent'}"
+											th:classappend="${!field.type.enum and #lists.isEmpty(field.type.fields) ? '' : 'parent'}"
 											th:each="field,iterStat: ${returnType.fields}"
-											th:with="parent=${!field.type.enum and !#lists.isEmpty(field.nestedFields)}">
+											th:with="parent=${!field.type.enum and !#lists.isEmpty(field.type.fields)}">
 											<li class="td-1" style="width: 25%; text-indent: 25px;">
 												<i th:if="${parent}" class="triangle"></i><span
 												th:utext="${field.name}"></span>
@@ -188,7 +188,7 @@
 											<li th:if="${parent}" th:class="${parent ? 'child' :''}"
 												style="display: none">
 												<ul class="tr xx"
-													th:each="child,iterStat: ${field.modelFields}">
+													th:each="child,iterStat: ${field.type.fields}">
 													<li class="td-1" style="width: 24%; text-indent: 25px;"
 														th:utext="${child.name}"></li>
 													<li class="td-2" style="width: 25%"

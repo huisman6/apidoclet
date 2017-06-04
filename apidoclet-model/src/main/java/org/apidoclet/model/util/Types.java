@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import java.sql.Date;
 import java.util.AbstractCollection;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,53 +23,54 @@ import org.apidoclet.model.util.spi.TypesExtension.SimpleTypeMapping;
  */
 public final class Types {
   /**
-   * array dimension info,default:[]. eg：[][] means two-dimension array and [] means one-dimension
-   * array
+   * array dimension info,default:[]
+   * 
+   * e.g：[][] means two-dimension array and [] means one-dimension array
    */
   public static final String DIMENTION_STR = "[]";
   /**
    * register simple type and its default value,a simple type does't need to parse fields
    */
-  private static final List<SimpleTypeMapping> DEFAULT_SIMPLE_TYPE_MAPPINGS =
-      Arrays
-          .asList(
-              new SimpleTypeMapping(int.class.getName(), 0),
-              new SimpleTypeMapping(Integer.class.getName(), Integer.valueOf(0)),
-              new SimpleTypeMapping(byte.class.getName(), 0),
-              new SimpleTypeMapping(Byte.class.getName(), Byte
-                  .valueOf((byte) 0)),
-              new SimpleTypeMapping(short.class.getName(), 0),
-              new SimpleTypeMapping(Short.class.getName(), Short
-                  .valueOf((short) 0)),
-              new SimpleTypeMapping(float.class.getName(), 0.004),
-              new SimpleTypeMapping(Float.class.getName(), Float
-                  .valueOf(0.003F)),
-              new SimpleTypeMapping(double.class.getName(), 0.002D),
-              new SimpleTypeMapping(Double.class.getName(), Double
-                  .valueOf(0.001D)),
-              new SimpleTypeMapping(long.class.getName(), 0),
-              new SimpleTypeMapping(Long.class.getName(), Long.valueOf(0)),
-              new SimpleTypeMapping(boolean.class.getName(), false),
-              new SimpleTypeMapping(Boolean.class.getName(), false),
-              new SimpleTypeMapping(char.class.getName(), 'a'),
-              new SimpleTypeMapping(Character.class.getName(), 'a'),
-              new SimpleTypeMapping(Date.class.getName(), System
-                  .currentTimeMillis()),
-              new SimpleTypeMapping(java.util.Date.class.getName(), System
-                  .currentTimeMillis()),
-              new SimpleTypeMapping(String.class.getName(), "\"String\""),
-              new SimpleTypeMapping(StringBuffer.class.getName(),
-                  new StringBuffer("\"String\"")),
-              new SimpleTypeMapping(StringBuilder.class.getName(),
-                  new StringBuilder("\"String\"")),
-              new SimpleTypeMapping(BigDecimal.class.getName(), new BigDecimal(
-                  "0.0")),
-              new SimpleTypeMapping(BigInteger.class.getName(), new BigInteger(
-                  "0")),
-              new SimpleTypeMapping(void.class.getName(), null),
-              new SimpleTypeMapping(Class.class.getName(), Class.class
-                  .getName()), new SimpleTypeMapping(Object.class.getName(),
-                  null));
+  private static final List<SimpeType> DEFAULT_SIMPLE_TYPES = Arrays.asList(
+      new SimpeType(int.class, 0),
+      new SimpeType(Integer.class, Integer.valueOf(0)), new SimpeType(
+          byte.class, 0), new SimpeType(Byte.class, Byte.valueOf((byte) 0)),
+      new SimpeType(short.class, 0),
+      new SimpeType(Short.class, Short.valueOf((short) 0)), new SimpeType(
+          float.class, 0.002),
+      new SimpeType(Float.class, Float.valueOf(0.004F)), new SimpeType(
+          double.class, 0.006D),
+      new SimpeType(Double.class, Double.valueOf(0.008D)), new SimpeType(
+          long.class, 0), new SimpeType(Long.class, Long.valueOf(0)),
+      new SimpeType(boolean.class, false), new SimpeType(Boolean.class, false),
+      new SimpeType(char.class, 'a'), new SimpeType(Character.class, 'a'),
+      new SimpeType(Date.class, System.currentTimeMillis()), new SimpeType(
+          java.util.Date.class, System.currentTimeMillis()), new SimpeType(
+          String.class, "String"), new SimpeType(StringBuffer.class,
+          new StringBuffer("String")), new SimpeType(StringBuilder.class,
+          new StringBuilder("String")), new SimpeType(CharSequence.class,
+          "String"), new SimpeType(BigDecimal.class, new BigDecimal("0.0")),
+      new SimpeType(BigInteger.class, new BigInteger("0")), new SimpeType(
+          Class.class, Class.class.getName()));
+
+  static class SimpeType {
+    private Class<?> type;
+    private Object defaultValue;
+
+    public SimpeType(Class<?> type, Object defaultValue) {
+      this.type = type;
+      this.defaultValue = defaultValue;
+    }
+
+    public Class<?> getType() {
+      return type;
+    }
+
+    public Object getDefaultValue() {
+      return defaultValue;
+    }
+  }
+
   /**
    * simple type and its default value mapping
    */
@@ -84,8 +84,8 @@ public final class Types {
 
   static {
     // register default simple type
-    for (SimpleTypeMapping simpleType : DEFAULT_SIMPLE_TYPE_MAPPINGS) {
-      addSimpleTypeValueMapping(simpleType.getQulifiedTypeName(),
+    for (SimpeType simpleType : DEFAULT_SIMPLE_TYPES) {
+      addSimpleTypeValueMapping(simpleType.getType().getName(),
           simpleType.getDefaultValue());
     }
     // detect provided simple type and collection type by JAVA SPI mechanism
@@ -123,40 +123,69 @@ public final class Types {
 
 
   /**
-   * test whether the given type is simple type, usually, a simple type doesn't need to parse fields
+   * test whether the given type is a simple type, usually, a simple type doesn't need to parse
+   * fields
    * 
    * @param type full-qualified class name
    */
   public static boolean isSimpleType(String type) {
+    if (type == null) {
+      return false;
+    }
     Class<?> clazz = getIfExists(type);
     if (clazz == null) {
       return SIMPLE_CLASS_TYPES.containsKey(type);
     }
-    return isAssignablePrimitive(clazz);
+    return getDefaultSimpleType(clazz) != null;
+  }
+
+  /**
+   * Check whether this {@code qualifiedClassName} is a JavaBean.</p>
+   * 
+   * Any {@code qualifiedClassName} could be a JavaBean,except:</p>
+   *  
+   *   1, {@link #isJDKType(String)} return true </p>
+   *   
+   *   2,{@link #isSimpleType(String)} return true
+   */
+  public static boolean isJavaBean(String qualifiedClassName) {
+    if (qualifiedClassName == null) {
+      return false;
+    }
+    if (isJDKType(qualifiedClassName) || isSimpleType(qualifiedClassName)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * check whether {@code qualifiedClassName} is provided by JDK
+   */
+  public static boolean isJDKType(String qualifiedClassName) {
+    if (qualifiedClassName == null) {
+      return false;
+    }
+    return qualifiedClassName.startsWith("java.");
   }
 
   /**
    * test whether the given class is a sub class of JDK class(Number,String,Date,Calendar)
+   * 
+   * return null indicates it isn't a simple type
    */
-  private static boolean isAssignablePrimitive(Class<?> clazz) {
+  private static Class<?> getDefaultSimpleType(Class<?> clazz) {
     if (clazz.isPrimitive()) {
-      return true;
+      return clazz;
     }
-    Class<?>[] simpleTypes =
-        new Class<?>[] {Double.class, Float.class, Byte.class, Character.class,
-            Integer.class, Boolean.class, Short.class, Long.class,
-            String.class, StringBuffer.class, StringBuilder.class,
-            java.util.Date.class, Date.class, Calendar.class, BigDecimal.class,
-            BigInteger.class, Void.class};
-    for (Class<?> sz : simpleTypes) {
-      if (sz == clazz) {
-        return true;
+    for (SimpeType defaultSimpleType : DEFAULT_SIMPLE_TYPES) {
+      if (defaultSimpleType.getType() == clazz) {
+        return clazz;
       }
-      if (sz.isAssignableFrom(clazz)) {
-        return true;
+      if (defaultSimpleType.getType().isAssignableFrom(clazz)) {
+        return defaultSimpleType.getType();
       }
     }
-    return false;
+    return null;
   }
 
   /**
@@ -166,6 +195,13 @@ public final class Types {
    * @since 2016年1月16日
    */
   public static Object getSimpleTypeDefaultValue(String type) {
+    Class<?> clazz = getIfExists(type);
+    if (clazz != null) {
+      Class<?> defaultType = getDefaultSimpleType(clazz);
+      if (defaultType != null) {
+        return SIMPLE_CLASS_TYPES.get(defaultType.getName());
+      }
+    }
     return SIMPLE_CLASS_TYPES.get(type);
   }
 
@@ -175,7 +211,7 @@ public final class Types {
   public static boolean isCollectionType(String qualifiedTypeName) {
     Class<?> clazz = getIfExists(qualifiedTypeName);
     if (clazz == null) {
-      // absent in classpath
+      // classpath not found,try customized collection types
       return COLLECTION_TYPES.contains(qualifiedTypeName);
     }
     if (clazz.isArray() || Collection.class.isAssignableFrom(clazz)) {
@@ -206,6 +242,9 @@ public final class Types {
    */
   public static Class<?> getIfExists(String type) {
     try {
+      if (type == null) {
+        return null;
+      }
       return Class.forName(type);
     } catch (ClassNotFoundException e) {
       return null;
@@ -218,6 +257,9 @@ public final class Types {
    * @param type full-qualified class name
    */
   public static boolean isMap(String type) {
+    if (type == null) {
+      return false;
+    }
     Class<?> clazz = getIfExists(type);
     if (clazz == null) {
       return false;

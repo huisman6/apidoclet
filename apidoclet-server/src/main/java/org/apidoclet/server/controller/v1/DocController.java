@@ -18,6 +18,7 @@ import org.apidoclet.server.model.VersionGroupedRestClass;
 import org.apidoclet.server.model.VersionedRestApp;
 import org.apidoclet.server.model.VersionedRestMethod;
 import org.apidoclet.server.service.VersionGroupedAppService;
+import org.apidoclet.server.utils.DynamicBeanCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -28,9 +29,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * page controller
@@ -65,8 +70,9 @@ public class DocController {
 
 
   /**
-    * project info
-    * @author huisman
+   * project info
+   * 
+   * @author huisman
    */
   @RequestMapping(value = "/v1/doc/{appId}/projectInfo")
   public String app(Model model, @PathVariable(value = "appId") String appId) {
@@ -91,6 +97,38 @@ public class DocController {
     return "index";
   }
 
+
+  @RequestMapping(value = "/v1/doc/{appId}/{restClassId}/{methodId}/json")
+  @ResponseBody
+  public Object methodDoc(@PathVariable(value = "appId") String appId,
+      @PathVariable(value = "restClassId") String restClassId, @PathVariable(
+          value = "methodId") String methodId, @RequestParam(value = "pretty",
+          required = false) Boolean pretty) {
+    VersionedRestApp restApp = versionGroupedAppService.findById(appId);
+    Assert.notNull(restApp, String.format("app(id=%s) does't exists", appId));
+
+    VersionGroupedRestClass restClass = restApp.getRestClass(restClassId);
+    Assert.notNull(restClass, String.format(
+        "api (appId=%s,restClassId=%s) does't exists", appId, restClassId));
+
+    VersionedRestMethod method = restClass.getMethod(methodId);
+    Assert.notNull(method, String.format(
+        "api (appId=%s,restClassId=%s,methodId=%s) does't exists", appId,
+        restClassId, methodId));
+    Object obj =
+        DynamicBeanCreator.instantiate(method.getOriginal().getReturnType());
+    if (pretty != null && pretty) {
+      try {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();
+      }
+    }
+    return obj;
+  }
 
   /**
    * method info
@@ -208,9 +246,9 @@ public class DocController {
               + ((type.getMapValueType().isArray() || type.getMapValueType()
                   .isCollection()) ? "List<" + simpleType + ">" : simpleType)
               + ">";
-    }else if(!simpleType.equals(returnTypeName)){
-       //generic
-       returnTypeName=returnTypeName+"<"+simpleType+">";
+    } else if (!simpleType.equals(returnTypeName)) {
+      // generic
+      returnTypeName = returnTypeName + "<" + simpleType + ">";
     }
     return returnTypeName;
   }
@@ -262,8 +300,8 @@ public class DocController {
     } else {
       JSONObject jsonObject = new JSONObject();
       for (FieldInfo field : modelFields) {
-        if (field.getNestedFields() == null
-            || field.getNestedFields().isEmpty()) {
+        if (field.getType().getFields() == null
+            || field.getType().getFields().isEmpty()) {
           Object value = null;
           if (field.getType().isEnum()) {
             value = "Enum value";
@@ -277,7 +315,7 @@ public class DocController {
           }
           jsonObject.put(field.getName(), value);
         } else {
-          Object value = asJsonObject(field.getNestedFields());
+          Object value = asJsonObject(field.getType().getFields());
           if (field.getType().isArray() || field.getType().isCollection()) {
             jsonObject.put(field.getName(), createJsonArray(value));
           } else {
@@ -353,13 +391,12 @@ public class DocController {
     }
     for (FieldInfo field : fields) {
       TypeInfo type = field.getType();
-      if (field.getNestedFields() != null && field.getNestedFields().size() > 0) {
+      if (type.getFields() != null && type.getFields().size() > 0) {
         if (type.isArray() || type.isCollection()) {
           jsonObject.put(field.getName(),
-              createJsonArray(asJsonObject(field.getNestedFields())));
+              createJsonArray(asJsonObject(type.getFields())));
         } else {
-          jsonObject
-              .put(field.getName(), asJsonObject(field.getNestedFields()));
+          jsonObject.put(field.getName(), asJsonObject(type.getFields()));
         }
       } else {
         Object value = null;
