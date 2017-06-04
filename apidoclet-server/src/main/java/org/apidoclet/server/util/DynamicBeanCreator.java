@@ -30,8 +30,7 @@ public class DynamicBeanCreator {
       return map;
     } else {
       // simple type or JDK class
-      if (Types.isJDKType(returnType.getActualType())
-          || Types.isSimpleType(returnType.getActualType())) {
+      if (!Types.isJavaBean(returnType.getActualType())) {
         Object value =
             Types.getSimpleTypeDefaultValue(returnType.getActualType());
         if (value == null) {
@@ -43,15 +42,11 @@ public class DynamicBeanCreator {
           } catch (Exception e) {
           }
         }
-        if (returnType.getActualType().equals(returnType.getContainerType())) {
-          return value;
+        // array or collection
+        if (returnType.isArray() || returnType.isCollection()) {
+          return Arrays.asList(value);
         } else {
-          // array or collection
-          if (returnType.isArray() || returnType.isCollection()) {
-            return Arrays.asList(value);
-          } else {
-            return value;
-          }
+          return value;
         }
       }
       try {
