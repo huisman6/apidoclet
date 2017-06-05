@@ -205,8 +205,8 @@ public class ApiDocletMojo extends AbstractMojo {
     addArgIfNotEmpty(arguments, "-doclet", this.doclet);
     String docletpath = getDocletPath();
     addArgIfNotEmpty(arguments, "-docletpath", docletpath);
-    // we have repackage spring-mvc/spring-cloud annotation to apidoclet-extension-spring-mvc
-    // class path,default set to doclet path，
+    // we have repackaged spring-mvc/spring-cloud annotation to apidoclet-extension-spring
+    // hence we don't need the accurate classpath,change classpath to doclet path，
     addArgIfNotEmpty(arguments, "-classpath", docletpath);
 
     // add classdir option
