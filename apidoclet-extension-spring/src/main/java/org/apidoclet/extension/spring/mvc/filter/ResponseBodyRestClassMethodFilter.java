@@ -26,7 +26,7 @@ public class ResponseBodyRestClassMethodFilter implements RestClassMethodFilter 
       return false;
     }
     if (AnnotationUtils.isPresent(spiClass.annotations(), Controller.class.getName())) {
-      //if @Controller annotation exists, double check if @ResponseBody annotation presents on this method
+      //if @Controller annotation exists, double check if @ResponseBody annotation exists on this method
       return AnnotationUtils.isPresent(methodDoc.annotations(), ResponseBody.class.getName());
     } else if (AnnotationUtils.isPresent(spiClass.annotations(), RestController.class.getName())) {
       //@RestController annotation exists

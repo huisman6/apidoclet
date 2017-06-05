@@ -15,7 +15,7 @@ public class RestControllerRestClassFilter implements RestClassFilter {
 
   @Override
   public boolean accept(ClassDoc classDoc, ApiDocletOptions options) {
-    // @Controller or @RestController presents
+    // @Controller or @RestController exists
     return AnnotationUtils.isPresent(classDoc.annotations(),
         Controller.class.getName())
         || AnnotationUtils.isPresent(classDoc.annotations(),

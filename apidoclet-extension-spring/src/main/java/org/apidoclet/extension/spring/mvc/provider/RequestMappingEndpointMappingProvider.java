@@ -48,11 +48,11 @@ public class RequestMappingEndpointMappingProvider implements
     String requestPath = "";
     if (urls == null || urls.isEmpty()) {
       options.getDocReporter().printWarning(position,
-          "NOT FOUND request mapping urls ");
+          "not found request mapping urls ");
     } else {
       if (urls.size() > 1) {
         options.getDocReporter().printWarning(position,
-            "FOUND multiple url mapping , will use first url");
+            "found multiple url mapping , will use first url");
       }
       // String value
       requestPath = (String) urls.get(0);
@@ -96,12 +96,11 @@ public class RequestMappingEndpointMappingProvider implements
         (paramAttr == null ? null : (List<String>) paramAttr.getValue());
     if (params != null && !params.isEmpty()) {
       for (String annotationValue : params) {
-        // condition query param ，可能值： param={"userCode","cityId=31000"}
+        // condition query param ,e.g： param={"userCode","cityId=31000"}
         String raw = annotationValue;
         if (StringUtils.isNullOrEmpty(raw)) {
           continue;
         }
-        // 查询字符串
         ParamCondition cp = new ParamCondition();
         String[] kv = raw.split(ParamCondition.DEFAULT_SPLIT_CHAR);
         cp.setName(kv[0]);
@@ -154,7 +153,7 @@ public class RequestMappingEndpointMappingProvider implements
         (produceAttr == null ? null : (List<String>) produceAttr.getValue());
     if (produces != null && produces.size() > 0) {
       for (String annotationValue : produces) {
-        // condition response content-type ，可能值： produces={"application/json"}
+        // condition response content-type ，e.g： produces={"application/json"}
         // response content-type header
         produceConditions.add(Produce.of(annotationValue));
       }
